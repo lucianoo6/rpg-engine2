@@ -21,8 +21,9 @@ export async function runBenchmark(engine, quality, {
     let calls = 0, cpu = 0, n = 0;
     let t = 0;
     await new Promise((resolve) => {
-      const sys = (dt, time, rawDt) => {
-        t += rawDt;
+      const sys = () => {
+        // real elapsed time (rawDt is clamped), so slow machines still get 5 s per preset
+        t += engine.frameTime / 1000;
         drive?.(t, level);
         if (t > warmup) {
           frames.push(engine.frameTime);
