@@ -13,8 +13,8 @@ export const QUALITY_LEVELS = ['low', 'medium', 'high', 'ultra'];
 export const QUALITY_PRESETS = {
   low: { pixelRatio: 1, renderScale: 0.75, msaa: 0, dofSamples: 16, shadowMapSize: 1024, shadowRadius: 1.5, lights: 4, pointShadows: false, foliage: 0.45, particles: 0.5 },
   medium: { pixelRatio: 1.25, renderScale: 1, msaa: 2, dofSamples: 24, shadowMapSize: 2048, shadowRadius: 2, lights: 6, pointShadows: false, foliage: 0.75, particles: 0.75 },
-  high: { pixelRatio: 1.5, renderScale: 1, msaa: 4, dofSamples: 40, shadowMapSize: 2048, shadowRadius: 2.5, lights: 8, pointShadows: true, foliage: 1, particles: 1 },
-  ultra: { pixelRatio: 2, renderScale: 1, msaa: 4, dofSamples: 56, shadowMapSize: 4096, shadowRadius: 3, lights: 10, pointShadows: true, foliage: 1, particles: 1 },
+  high: { pixelRatio: 1.5, renderScale: 1, msaa: 4, dofSamples: 40, shadowMapSize: 2048, shadowRadius: 2.5, lights: 8, pointShadows: true, pointShadowInterval: 2, foliage: 1, particles: 1 },
+  ultra: { pixelRatio: 2, renderScale: 1, msaa: 4, dofSamples: 56, shadowMapSize: 4096, shadowRadius: 3, lights: 10, pointShadows: true, pointShadowInterval: 1, foliage: 1, particles: 1 },
 };
 
 export class Quality {
@@ -74,6 +74,7 @@ export class Quality {
     if (this.lightPool) {
       this.lightPool.setSize(p.lights);
       this.lightPool.setShadows(p.pointShadows);
+      this.lightPool.shadowInterval = p.pointShadowInterval ?? 1;
     }
     for (const g of this.groundCover) g.setDensity(p.foliage);
     for (const em of this.emitters) em.rateScale = p.particles;

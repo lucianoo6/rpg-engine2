@@ -12,13 +12,16 @@ import * as THREE from 'three';
  * when nobody needs it.
  */
 export class LightPool {
-  constructor(scene, { size = 8, shadows = true, shadowMapSize = 512, fadeSpeed = 6 } = {}) {
+  constructor(scene, { size = 8, shadows = true, shadowMapSize = 512, fadeSpeed = 6, shadowInterval = 1 } = {}) {
     this.isLightPool = true;
     this.scene = scene;
     this.sources = [];
     this.slots = [];
     this.focus = new THREE.Vector3();
     this.fadeSpeed = fadeSpeed;
+    // re-render the point shadow cube every N frames (6 extra scene passes each time)
+    this.shadowInterval = shadowInterval;
+    this._shadowFrame = 0;
     this.shadowLight = new THREE.PointLight(0xffffff, 0, 10, 2);
     const sh = this.shadowLight.shadow;
     sh.mapSize.set(shadowMapSize, shadowMapSize);
@@ -120,7 +123,10 @@ export class LightPool {
       L.distance = src.distance;
       L.decay = src.decay;
       L.intensity = src.current * src.shadowWeight;
-      L.shadow.autoUpdate = L.intensity > 0.01;
+      L.shadow.autoUpdate = false;
+      this._shadowFrame = (this._shadowFrame + 1) % Math.max(1, this.shadowInterval);
+      if (L.intensity > 0.01 && (this._shadowFrame === 0 || src !== this._lastShadowSrc)) L.shadow.needsUpdate = true;
+      this._lastShadowSrc = src;
     } else {
       L.intensity = 0;
       L.shadow.autoUpdate = false;

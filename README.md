@@ -176,7 +176,7 @@ Four presets cover everything that costs GPU time:
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | low | 1 | 0.75 | off | 16 | 1024 | 4 | off | 45% | 50% |
 | medium | 1.25 | 1 | 2× | 24 | 2048 | 6 | off | 75% | 75% |
-| high | 1.5 | 1 | 4× | 40 | 2048 | 8 + 1 | on | 100% | 100% |
+| high | 1.5 | 1 | 4× | 40 | 2048 | 8 + 1 | on (every 2nd frame) | 100% | 100% |
 | ultra | 2 | 1 | 4× | 56 | 4096 | 10 + 1 | on | 100% | 100% |
 
 - **Auto mode** (the default) starts on `high` and steps down one preset whenever the game averages under ~40 fps over a few seconds. It never steps back up on its own, so it can't oscillate. Pick a fixed preset in **Performance → quality** or with `?quality=`.
