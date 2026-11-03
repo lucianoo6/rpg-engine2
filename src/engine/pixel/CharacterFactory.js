@@ -24,8 +24,8 @@ const FRAMES = [
 
 export const CHARACTER_ANIMATIONS = {
   idle: { frames: [0, 0, 1, 1], fps: 2.4 },
-  walk: { frames: [2, 3, 4, 3], fps: 8 },
-  run: { frames: [2, 3, 4, 3], fps: 13 },
+  walk: { frames: [2, 3, 4, 3], fps: 8, steps: [0, 2] },
+  run: { frames: [2, 3, 4, 3], fps: 13, steps: [0, 2] },
 };
 
 const L = [-0.6, -0.7, 0.4];
@@ -555,8 +555,8 @@ export function makeCatSheet({ fur = '#d98a3d', stripes = true } = {}) {
     directions: ['left', 'right'],
     animations: {
       idle: { frames: [4, 4, 4, 5], fps: 2 },
-      walk: { frames: [0, 1, 2, 3], fps: 9 },
-      run: { frames: [0, 1, 2, 3], fps: 14 },
+      walk: { frames: [0, 1, 2, 3], fps: 9, steps: [0, 2] },
+      run: { frames: [0, 1, 2, 3], fps: 14, steps: [0, 2] },
     },
   };
 }

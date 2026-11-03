@@ -40,6 +40,8 @@ export class Character {
     this.blob = blob;
     this.root.add(blob);
     this.animator = new SpriteAnimator(this.sprite, sheet);
+    this.onStep = null; // (character, animationName) => void, e.g. footstep sounds
+    this.animator.onStep = (anim) => this.onStep && this.onStep(this, anim);
     this.position = this.root.position;
     this.position.set(x, world.groundAt(x, z), z);
     this.facing = new THREE.Vector2(0, 1); // world xz; +z = towards the camera

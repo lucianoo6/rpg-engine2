@@ -40,12 +40,45 @@ export class SpriteInstances extends THREE.InstancedMesh {
     return i;
   }
 
-  finalize() {
+  /**
+   * Upload instance data. With `shuffle`, instances are put in random order
+   * so setDensity() can thin them out evenly instead of region by region.
+   */
+  finalize({ shuffle = false } = {}) {
+    if (shuffle) this._shuffle();
+    this.total = this.count;
     this.instanceMatrix.needsUpdate = true;
     if (this.instanceColor) this.instanceColor.needsUpdate = true;
     this.geometry.attributes.aFlip.needsUpdate = true;
     this.computeBoundingSphere();
     this.computeBoundingBox();
     return this;
+  }
+
+  /** Draw only a fraction of the instances (quality setting for ground cover). */
+  setDensity(f) {
+    this.count = Math.round((this.total ?? this.count) * Math.max(0, Math.min(1, f)));
+  }
+
+  _shuffle() {
+    const n = this.count;
+    const m = this.instanceMatrix.array;
+    const c = this.instanceColor ? this.instanceColor.array : null;
+    const fl = this.geometry.attributes.aFlip.array;
+    const swap = (arr, a, b, size) => {
+      for (let k = 0; k < size; k++) {
+        const t = arr[a * size + k];
+        arr[a * size + k] = arr[b * size + k];
+        arr[b * size + k] = t;
+      }
+    };
+    let seed = 1234567;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296);
+    for (let i = n - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      swap(m, i, j, 16);
+      if (c) swap(c, i, j, 3);
+      swap(fl, i, j, 1);
+    }
   }
 }

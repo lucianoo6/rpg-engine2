@@ -39,6 +39,8 @@ Then open the URL Vite prints. Other pages:
 | Mouse wheel | Zoom |
 | `T` | Jump to the next time of day |
 | `P` | Photo mode (hide UI) |
+| `M` | Mute / unmute |
+| `I` | Performance stats overlay |
 | `G` | Toggle the settings panel |
 | Touch | Drag to move, tap to interact |
 
@@ -51,7 +53,7 @@ Things to try:
 - Cross the bridge.
 - Talk to everyone, the cat included.
 
-The settings panel (`G`) exposes live controls for time of day, the camera, depth of field, bloom, colour grade, render scale and pixelated upscaling, wind, and shadows.
+The settings panel (`G`) has live controls for quality presets and the benchmark, audio volumes, time of day, the camera, depth of field, bloom, colour grade, render scale and pixelated upscaling, wind, and shadows.
 
 URL parameters, handy for screenshots and debugging:
 
@@ -63,7 +65,11 @@ URL parameters, handy for screenshots and debugging:
 | `at=31,16.5` | Spawn the player at tile coordinates `x,z` |
 | `yaw=-20` | Start with the camera orbited |
 | `dist=30` | Start with a different camera distance |
-| `dpr=2` | Raise the device pixel ratio cap |
+| `quality=low` | Pin a quality preset (`low`, `medium`, `high`, `ultra`); without it the game starts on `high` in auto mode |
+| `stats` | Show the performance overlay |
+| `bench` | Run the benchmark right after loading |
+| `mute` | Start muted |
+| `dpr=2` | Pin the device pixel ratio cap, whatever the preset says |
 | `manual` | Don't start the loop; call `hd2d.engine.step(dt)` yourself (for deterministic captures) |
 
 ## How the HD-2D look is built
@@ -90,6 +96,8 @@ scene ─► HDR target (half-float colour + depth, 4× MSAA)
 src/engine/
   Engine.js                 renderer, scene, camera, main loop, systems
   render/PostFX.js          DoF + tilt-shift, bloom, tone map and grade
+  render/Quality.js         quality presets + auto governor that steps down below ~40 fps
+  render/Benchmark.js       times every preset on the same scripted frames
   render/MaterialPatch.js   shader injection: billboarding, wind, cloud shadows,
                             occlusion cut-out, per-instance flip; global uniforms
   render/Materials.js       shared lit world materials
@@ -107,9 +115,15 @@ src/engine/
   world/Props.js            houses with gable roofs, fences, lamps, well, decks, stall...
   world/StaticBatch.js      merges static props per material
   lighting/DayNightCycle.js keyframed time of day + stable shadow frustum
-  lighting/FlickerLight.js  lamps and fires that switch on at night
+  lighting/FlickerLight.js  lamps and fires that switch on at night (light *sources*)
+  lighting/LightPool.js     a few real PointLights handed to the sources that matter most
   lighting/LightShaft.js    additive god rays that lean with the sun
   fx/Particles.js           embers, smoke, fireflies, dust, mist, leaves, petals, sparkles
+  audio/AudioEngine.js      buses, reverb, limiter, noise, 2D spatialisation, unlock on gesture
+  audio/Synth.js            pluck, pad, bass, bell, noise-hit, blip and chirp voices
+  audio/Music.js            generative 3/4 music with day and night moods
+  audio/Ambience.js         wind, positional water and fire, birds, crickets
+  audio/Sfx.js              footsteps per surface, dialogue voices, UI, chimes
   camera/CameraRig.js       long-lens follow camera, orbit, zoom, intro fly-in
   entities/Character.js     walking sprite with collision, steps and facing
   entities/Behaviours.js    Wander and Patrol AI
@@ -154,11 +168,30 @@ engine.addSystem((dt) => {
 engine.start();
 ```
 
-## Performance notes
+## Performance and quality
 
-- The post pipeline renders at `devicePixelRatio`, capped at 1.5. Lower **Rendering → render scale** in the settings panel for weaker GPUs. Turning on **nearest upscale** as well gives chunkier pixels.
-- Foliage is instanced, and static props are merged per material. The demo draws a few dozen draw calls plus shadow passes.
-- The demo has 13 point lights. Only the campfire casts point-light shadows.
+Four presets cover everything that costs GPU time:
+
+| Preset | Pixel ratio cap | Render scale | MSAA | DoF samples | Sun shadow map | Point lights | Point shadows | Ground cover | Particles |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| low | 1 | 0.75 | off | 16 | 1024 | 4 | off | 45% | 50% |
+| medium | 1.25 | 1 | 2× | 24 | 2048 | 6 | off | 75% | 75% |
+| high | 1.5 | 1 | 4× | 40 | 2048 | 8 + 1 | on | 100% | 100% |
+| ultra | 2 | 1 | 4× | 56 | 4096 | 10 + 1 | on | 100% | 100% |
+
+- **Auto mode** (the default) starts on `high` and steps down one preset whenever the game averages under ~40 fps over a few seconds. It never steps back up on its own, so it can't oscillate. Pick a fixed preset in **Performance → quality** or with `?quality=`.
+- **Light pool.** The village has 13 light sources (street lamps, door lanterns, the campfire, the crystal and the shrine), but shaders only ever evaluate the preset's few real point lights. Each frame the pool hands them to the sources closest to the player and fades lights in and out as they swap. The campfire's point shadows use a dedicated light that stops rendering its shadow map when it's out of range.
+- **Stats overlay** (`I`): fps and frame time, CPU time, draw calls and triangles, active point lights, internal resolution and preset.
+- **Benchmark** (**Performance → run benchmark**, or `?bench`): it flies the same route at dusk (lamps and god rays on) for 5 seconds per preset. It then shows average fps, the slowest 1% of frames, frame and CPU time, and draw calls. Run it on the machines you care about, because numbers from one GPU say little about another.
+- Foliage is instanced, and static props are merged per material.
+
+## Audio
+
+All sound is synthesised at runtime with the Web Audio API, so there are no audio files. Browsers only allow sound after a click, key press or tap, so it starts with the first input (or when you dismiss the title card).
+
+- **Music:** a generative pastoral piece in 3/4 (harp arpeggio, pad, bass and melodies composed per phrase in an A-A-B-A form). It switches to a slower, sparser, bell-led night mood after dusk. The switch waits for the next phrase, and the music ducks under dialogue and while resting.
+- **Ambience:** drifting wind (stronger on the plateau), a waterfall and river that fade and pan with your position, a crackling campfire, birdsong by day, crickets at night.
+- **Effects:** footsteps that change with the ground (grass, dirt, sand, stone, wooden decks), a per-character dialogue "voice", UI ticks, the crystal's bell arpeggio, a lullaby when resting, a chime for location banners.
 
 ## Credits
 

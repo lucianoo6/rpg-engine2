@@ -21,7 +21,7 @@ import { POI, W, D, distToPolyline } from './VillageMap.js';
  * props, thousands of instanced foliage sprites, lights, particles and
  * light shafts. Returns handles the game loop animates.
  */
-export function decorateVillage(scene, map, world) {
+export function decorateVillage(scene, map, world, { lightParent = scene } = {}) {
   const rng = new RNG(1234);
   const out = {
     lights: [], emitters: [], shafts: [], flames: [], fireflies: [], dayEmitters: [],
@@ -92,7 +92,7 @@ export function decorateVillage(scene, map, world) {
     mark(f.minX, f.minZ, f.maxX, f.maxZ);
     keepClear(info.door.x, info.door.z, 1.4);
     for (const p of info.lights) {
-      out.lights.push(new FlickerLight(scene, p, { color: '#ffb35c', intensity: 5, distance: 7, flicker: 0.08, dayLevel: 0 }));
+      out.lights.push(new FlickerLight(lightParent, p, { color: '#ffb35c', intensity: 5, distance: 7, flicker: 0.08, dayLevel: 0 }));
     }
     for (const c of info.chimneys) {
       const smoke = new ParticleEmitter(ParticlePresets.smoke());
@@ -145,7 +145,7 @@ export function decorateVillage(scene, map, world) {
     const p = Props.buildLampPost(batch, lx, groundAt(lx, lz), lz, { dir });
     world.addCircle(lx, lz, 0.25);
     keepClear(lx, lz, 1.2);
-    out.lights.push(new FlickerLight(scene, p, { color: '#ffbf6b', intensity: 7, distance: 9, flicker: 0.06, dayLevel: 0 }));
+    out.lights.push(new FlickerLight(lightParent, p, { color: '#ffbf6b', intensity: 7, distance: 9, flicker: 0.06, dayLevel: 0 }));
   }
 
   // campfire with log seats
@@ -163,7 +163,7 @@ export function decorateVillage(scene, map, world) {
   flame.position.set(fx, fy + 0.05, fz);
   scene.add(flame);
   out.flames.push({ sprite: flame, fps: 12, offset: 0 });
-  const fireLight = new FlickerLight(scene, new THREE.Vector3(fx, fy + 0.9, fz), { color: '#ff9a45', intensity: 9, distance: 11, flicker: 0.22, speed: 1.3, nightOnly: true, dayLevel: 0.35, castShadow: true });
+  const fireLight = new FlickerLight(lightParent, new THREE.Vector3(fx, fy + 0.9, fz), { color: '#ff9a45', intensity: 9, distance: 11, flicker: 0.22, speed: 1.3, nightOnly: true, dayLevel: 0.35, castShadow: true });
   out.lights.push(fireLight);
   out.campfire = new THREE.Vector3(fx, fy, fz);
   const embers = new ParticleEmitter(ParticlePresets.embers());
@@ -181,7 +181,7 @@ export function decorateVillage(scene, map, world) {
   // a lantern at the end of the pier, hanging over open water so it reflects at night
   const pierLamp = Props.buildLampPost(batch, P.x0 + 0.15, P.y, P.z0 + 0.25, { height: 1.9, dir: -1 });
   world.addCircle(P.x0 + 0.15, P.z0 + 0.25, 0.2);
-  out.lights.push(new FlickerLight(scene, pierLamp, { color: '#ffbf6b', intensity: 5, distance: 7, flicker: 0.07, dayLevel: 0 }));
+  out.lights.push(new FlickerLight(lightParent, pierLamp, { color: '#ffbf6b', intensity: 5, distance: 7, flicker: 0.07, dayLevel: 0 }));
   world.addCircle(P.x0 + 0.5, P.z1 - 1.2, 0.35);
   const B = POI.bridge;
   Props.buildDeck(batch, B.x0, B.z0, B.x1, B.z1, B.y, { rails: true, postDepth: 1.2 });
@@ -223,7 +223,7 @@ export function decorateVillage(scene, map, world) {
     scene.add(fl);
     out.flames.push({ sprite: fl, fps: 11, offset: rng.range(0, 8) });
   }
-  out.lights.push(new FlickerLight(scene, new THREE.Vector3(shx, 3 + 2.6, shz + 0.6), { color: '#ffa04f', intensity: 7, distance: 9, flicker: 0.18, dayLevel: 0.2 }));
+  out.lights.push(new FlickerLight(lightParent, new THREE.Vector3(shx, 3 + 2.6, shz + 0.6), { color: '#ffa04f', intensity: 7, distance: 9, flicker: 0.18, dayLevel: 0.2 }));
   out.shrine = shrine.altar;
 
   // signpost at the village entrance
@@ -254,7 +254,7 @@ export function decorateVillage(scene, map, world) {
   );
   glow.position.set(cx, sqY + 0.03, cz);
   scene.add(glow);
-  const crystalLight = new FlickerLight(scene, new THREE.Vector3(cx, sqY + 1.8, cz), { color: '#7fd8ff', intensity: 5, distance: 8, flicker: 0.05, speed: 0.4, nightOnly: false });
+  const crystalLight = new FlickerLight(lightParent, new THREE.Vector3(cx, sqY + 1.8, cz), { color: '#7fd8ff', intensity: 5, distance: 8, flicker: 0.05, speed: 0.4, nightOnly: false });
   out.lights.push(crystalLight);
   const sparkles = new ParticleEmitter(ParticlePresets.sparkles());
   sparkles.emitter.set(cx, sqY + 1.4, cz);
@@ -497,10 +497,12 @@ function buildFoliage(scene, map, world, rng, { noDecor, spots, out }) {
   }
   for (const [x, z] of [[29.2, 10.6], [33.8, 10.8], [29.6, 11.6]]) rocks[0].add(x, world.groundAt(x, z), z, { scale: 1.2 });
 
+  const groundCover = [...tufts, ...flowers, reeds];
   for (const s of all) {
-    s.finalize();
+    s.finalize({ shuffle: groundCover.includes(s) });
     s.frustumCulled = false;
     if (s.count > 0) scene.add(s);
   }
   out.foliage = all;
+  out.groundCover = groundCover;
 }

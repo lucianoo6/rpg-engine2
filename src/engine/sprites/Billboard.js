@@ -80,7 +80,8 @@ export class Billboard extends THREE.Mesh {
 
 /**
  * Plays named animations from a sheet description
- * ({ animations: { name: { frames, fps } }, directions: [...] }).
+ * ({ animations: { name: { frames, fps, steps? } }, directions: [...] }).
+ * `steps` lists frame-array indices where a foot lands; onStep() fires there.
  */
 export class SpriteAnimator {
   constructor(sprite, sheet) {
@@ -90,6 +91,8 @@ export class SpriteAnimator {
     this.direction = sheet.directions[0];
     this.time = 0;
     this.speed = 1;
+    this.onStep = null;
+    this._lastIdx = -1;
   }
 
   play(name) {
@@ -97,6 +100,7 @@ export class SpriteAnimator {
     // keep the walk phase when switching between walk and run
     if (!(/walk|run/.test(this.current) && /walk|run/.test(name))) this.time = 0;
     this.current = name;
+    this._lastIdx = -1;
   }
 
   /** Sheets without a row for `dir` (e.g. side-only critters) keep their last facing. */
@@ -108,6 +112,10 @@ export class SpriteAnimator {
     const anim = this.sheet.animations[this.current];
     this.time += dt * this.speed;
     const idx = Math.floor(this.time * anim.fps) % anim.frames.length;
+    if (idx !== this._lastIdx) {
+      if (this._lastIdx !== -1 && anim.steps && anim.steps.includes(idx) && this.onStep) this.onStep(this.current);
+      this._lastIdx = idx;
+    }
     const row = Math.max(0, this.sheet.directions.indexOf(this.direction));
     this.sprite.setFrame(anim.frames[idx], row);
   }

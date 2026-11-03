@@ -52,7 +52,6 @@ uniform sampler2D tColor;
 uniform vec2 uTexel;
 varying vec2 vUv;
 ${COC}
-#define SAMPLES 40
 #define GOLDEN 2.39996323
 void main() {
   float cd = viewDist(vUv);
@@ -206,6 +205,7 @@ export class PostFX {
       uniforms: { tColor: { value: this.sceneRT.texture }, uTexel: { value: new THREE.Vector2() }, ...cocUniforms() },
       vertexShader: QUAD_VERT,
       fragmentShader: DOF_GATHER,
+      defines: { SAMPLES: 40 },
     });
     this.compositeMat = new THREE.ShaderMaterial({
       uniforms: { tColor: { value: this.sceneRT.texture }, tBlur: { value: this.dofRT.texture }, uEnabled: { value: 1 }, ...cocUniforms() },
@@ -252,6 +252,20 @@ export class PostFX {
     this.gradeMat.uniforms.uResolution.value.set(w, h);
     this.internalWidth = w;
     this.internalHeight = h;
+  }
+
+  /** Bokeh samples per pixel for the DoF gather (quality vs. cost). */
+  setDofSamples(n) {
+    if (this.gatherMat.defines.SAMPLES === n) return;
+    this.gatherMat.defines.SAMPLES = n;
+    this.gatherMat.needsUpdate = true;
+  }
+
+  /** MSAA sample count of the scene target (0 disables multisampling). */
+  setMsaa(n) {
+    if (this.sceneRT.samples === n) return;
+    this.sceneRT.samples = n;
+    this.sceneRT.dispose();
   }
 
   setRenderScale(scale, pixelate = this.pixelate) {
@@ -318,7 +332,8 @@ export class PostFX {
     u.uGrain.value = on ? g.grain : 0;
     u.uChroma.value = on ? g.chroma : 0;
     u.uLiftAmount.value = on ? g.liftAmount : 0;
-    u.uTint.value.copy(on ? g.tint : new THREE.Color(1, 1, 1));
+    if (on) u.uTint.value.copy(g.tint);
+    else u.uTint.value.setRGB(1, 1, 1);
     u.uLift.value.copy(g.lift);
     u.uLetterbox.value = g.letterbox;
     u.uFade.value = g.fade;

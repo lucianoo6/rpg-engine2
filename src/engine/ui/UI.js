@@ -29,6 +29,8 @@ export class DialogueBox {
     this.choices = el('div', 'hd-choices', ui.root);
     this.active = false;
     this.cps = 48;
+    // optional hooks (sound, logging): onLine(line), onChar(char, line), onMove(index), onPick(index), onClose()
+    this.onLine = this.onChar = this.onMove = this.onPick = this.onClose = null;
     this._queue = [];
     this._resolve = null;
     this._full = '';
@@ -62,6 +64,7 @@ export class DialogueBox {
   _advance() {
     const line = this._queue.shift();
     if (!line) {
+      if (this.active && this.onClose) this.onClose();
       this.active = false;
       this.box.classList.remove('is-open');
       this.choices.classList.remove('is-open');
@@ -79,6 +82,7 @@ export class DialogueBox {
     this.next.classList.remove('is-ready');
     this._choice = null;
     this.choices.classList.remove('is-open');
+    if (this.onLine) this.onLine(line);
   }
 
   _openChoices() {
@@ -87,7 +91,11 @@ export class DialogueBox {
     this.choices.innerHTML = '';
     opts.forEach((o, i) => {
       const b = el('div', 'hd-choice', this.choices, o);
-      b.addEventListener('mouseenter', () => { this._choice = i; this._renderChoices(); });
+      b.addEventListener('mouseenter', () => {
+        if (this._choice !== i && this.onMove) this.onMove(i);
+        this._choice = i;
+        this._renderChoices();
+      });
       b.addEventListener('click', () => this._pick(i));
     });
     this.choices.classList.add('is-open');
@@ -99,6 +107,7 @@ export class DialogueBox {
   }
 
   _pick(i) {
+    if (this.onPick) this.onPick(i);
     const cb = this._line.onChoose;
     this._queue = [];
     this._advance();
@@ -109,8 +118,11 @@ export class DialogueBox {
     if (!this.active) return;
     const confirm = input.pressed('Space', 'Enter', 'KeyE', 'Tap');
     if (this._shown < this._full.length) {
+      const before = Math.floor(this._shown);
       this._shown = Math.min(this._full.length, this._shown + this.cps * dt);
-      this.text.textContent = this._full.slice(0, Math.floor(this._shown));
+      const now = Math.floor(this._shown);
+      if (this.onChar && !confirm) for (let k = before; k < now; k++) this.onChar(this._full[k], this._line);
+      this.text.textContent = this._full.slice(0, now);
       if (confirm) {
         this._shown = this._full.length;
         this.text.textContent = this._full;
@@ -123,8 +135,9 @@ export class DialogueBox {
     }
     if (this._line.options) {
       if (this._choice === null) this._openChoices();
-      if (input.pressed('ArrowDown', 'KeyS')) { this._choice = (this._choice + 1) % this._line.options.length; this._renderChoices(); }
-      if (input.pressed('ArrowUp', 'KeyW')) { this._choice = (this._choice - 1 + this._line.options.length) % this._line.options.length; this._renderChoices(); }
+      const n = this._line.options.length;
+      if (input.pressed('ArrowDown', 'KeyS')) { this._choice = (this._choice + 1) % n; this._renderChoices(); if (this.onMove) this.onMove(this._choice); }
+      if (input.pressed('ArrowUp', 'KeyW')) { this._choice = (this._choice - 1 + n) % n; this._renderChoices(); if (this.onMove) this.onMove(this._choice); }
       if (confirm) this._pick(this._choice);
       return;
     }
@@ -184,7 +197,7 @@ export class HUD {
     this.help = el('div', 'hd-help', ui.root, `
       <div><kbd>WASD</kbd><kbd>↑↓←→</kbd> Move &nbsp; <kbd>Shift</kbd> Run</div>
       <div><kbd>Space</kbd> Talk / Examine &nbsp; <kbd>Q</kbd><kbd>E</kbd> Orbit &nbsp; <kbd>Wheel</kbd> Zoom</div>
-      <div><kbd>T</kbd> Time of day &nbsp; <kbd>P</kbd> Photo mode &nbsp; <kbd>G</kbd> Settings</div>`);
+      <div><kbd>T</kbd> Time of day &nbsp; <kbd>P</kbd> Photo mode &nbsp; <kbd>M</kbd> Sound &nbsp; <kbd>G</kbd> Settings</div>`);
     this.fps = el('div', 'hd-fps', ui.root);
   }
 
@@ -195,7 +208,19 @@ export class HUD {
   }
 
   setFps(n) {
+    if (this.statsVisible) return;
     this.fps.textContent = n ? `${n} fps` : '';
+  }
+
+  /** Detailed performance readout (toggle with showStats). */
+  showStats(on) {
+    this.statsVisible = on;
+    this.fps.classList.toggle('is-stats', on);
+    if (!on) this.fps.textContent = '';
+  }
+
+  setStats(lines) {
+    if (this.statsVisible) this.fps.textContent = lines.join('\n');
   }
 }
 

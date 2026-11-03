@@ -9,6 +9,7 @@ import { globalUniforms } from '../render/MaterialPatch.js';
  */
 
 const DEG = Math.PI / 180;
+const UP = new THREE.Vector3(0, 1, 0);
 
 export const DEFAULT_KEYFRAMES = [
   { t: 0.0, name: 'Midnight', sun: '#7d93d6', sunI: 1.1, az: -20, el: 58, sky: '#34447a', ground: '#1a1a2a', hemiI: 1.5, fog: '#141d3a', fogNear: 30, fogFar: 72, exposure: 1.75, night: 1, shafts: 0, clouds: 0, sat: 0.92, contrast: 1.06, tint: '#dde3ff', bloom: 0.75 },
@@ -46,6 +47,7 @@ export class DayNightCycle {
     this._m = new THREE.Matrix4();
     this._mi = new THREE.Matrix4();
     this._v = new THREE.Vector3();
+    this._p = new THREE.Vector3();
     this._transition = null;
   }
 
@@ -154,9 +156,9 @@ export class DayNightCycle {
     cam.near = 1; cam.far = 140;
     cam.updateProjectionMatrix();
     const texel = (2 * half) / sun.shadow.mapSize.x;
-    this._m.lookAt(this._v.set(0, 0, 0), s.sunDir.clone().negate(), new THREE.Vector3(0, 1, 0));
+    this._m.lookAt(this._v.set(0, 0, 0), this._p.copy(s.sunDir).negate(), UP);
     this._mi.copy(this._m).invert();
-    const p = this.focus.clone().applyMatrix4(this._mi);
+    const p = this._p.copy(this.focus).applyMatrix4(this._mi);
     p.x = Math.round(p.x / texel) * texel;
     p.y = Math.round(p.y / texel) * texel;
     p.applyMatrix4(this._m);

@@ -101,6 +101,7 @@ export class ParticleEmitter extends THREE.Points {
     this.home = new Float32Array(o.max * 3);
     this.accum = 0;
     this.level = 1; // scales spawn rate and alpha (e.g. fireflies only at night)
+    this.rateScale = 1; // quality setting: fewer particles on slower machines
     this.active = true;
     this.cA = new THREE.Color(o.colors[0]);
     this.cB = new THREE.Color(o.colors[1] ?? o.colors[0]);
@@ -158,7 +159,7 @@ export class ParticleEmitter extends THREE.Points {
   update(dt, t) {
     const o = this.o;
     if (this.active && this.level > 0.001) {
-      this.accum += o.rate * this.level * dt;
+      this.accum += o.rate * this.level * this.rateScale * dt;
       while (this.accum >= 1) {
         this._spawn();
         this.accum -= 1;

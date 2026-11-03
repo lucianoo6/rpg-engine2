@@ -3,6 +3,8 @@ export { Engine } from './Engine.js';
 export { Input } from './input/Input.js';
 export { CameraRig } from './camera/CameraRig.js';
 export { PostFX } from './render/PostFX.js';
+export { Quality, QUALITY_PRESETS, QUALITY_LEVELS } from './render/Quality.js';
+export { runBenchmark } from './render/Benchmark.js';
 export { globalUniforms, patchMaterial, makeShadowMaterials } from './render/MaterialPatch.js';
 export { worldMaterial } from './render/Materials.js';
 
@@ -24,8 +26,15 @@ export * as Props from './world/Props.js';
 
 export { DayNightCycle, DEFAULT_KEYFRAMES } from './lighting/DayNightCycle.js';
 export { FlickerLight } from './lighting/FlickerLight.js';
+export { LightPool } from './lighting/LightPool.js';
 export { LightShaft } from './lighting/LightShaft.js';
 export { ParticleEmitter, ParticlePresets } from './fx/Particles.js';
+
+export { AudioEngine } from './audio/AudioEngine.js';
+export { Music, MUSIC_MOODS } from './audio/Music.js';
+export { Ambience } from './audio/Ambience.js';
+export { Sfx } from './audio/Sfx.js';
+export * as Synth from './audio/Synth.js';
 
 export { Character } from './entities/Character.js';
 export { Wander, Patrol } from './entities/Behaviours.js';

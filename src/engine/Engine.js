@@ -14,6 +14,7 @@ export class Engine {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.setClearColor(0x000000, 1);
+    renderer.info.autoReset = false; // count every pass of a frame, reset in step()
     container.appendChild(renderer.domElement);
     renderer.domElement.classList.add('hd-canvas');
     this.renderer = renderer;
@@ -36,6 +37,8 @@ export class Engine {
     this._fpsFrames = 0;
     this._last = 0;
     this._running = false;
+    this.frameTime = 16.7; // unclamped ms between the last two frames
+    this.stats = { cpuMs: 0, calls: 0, triangles: 0, points: 0, programs: 0, textures: 0, geometries: 0 };
 
     this.resize = this.resize.bind(this);
     window.addEventListener('resize', this.resize);
@@ -44,6 +47,10 @@ export class Engine {
 
   get uniforms() {
     return globalUniforms;
+  }
+
+  get running() {
+    return this._running;
   }
 
   addSystem(system) {
@@ -81,8 +88,9 @@ export class Engine {
     const loop = (now) => {
       if (!this._running) return;
       requestAnimationFrame(loop);
-      this.step(Math.min(0.05, (now - this._last) / 1000));
+      const ms = now - this._last;
       this._last = now;
+      this.step(Math.min(0.05, ms / 1000), ms);
     };
     requestAnimationFrame(loop);
   }
@@ -92,7 +100,10 @@ export class Engine {
   }
 
   /** Advance one frame (also usable for deterministic stepping in tests). */
-  step(rawDt) {
+  step(rawDt, frameMs = rawDt * 1000) {
+    const t0 = performance.now();
+    this.frameTime = frameMs;
+    this.renderer.info.reset();
     const dt = this.paused ? 0 : rawDt * this.timeScale;
     this.time += dt;
     globalUniforms.uTime.value = this.time;
@@ -102,6 +113,15 @@ export class Engine {
     }
     this._updatePointScale();
     this.post.render(dt);
+    const info = this.renderer.info;
+    const st = this.stats;
+    st.cpuMs = performance.now() - t0;
+    st.calls = info.render.calls;
+    st.triangles = info.render.triangles;
+    st.points = info.render.points;
+    st.programs = info.programs ? info.programs.length : 0;
+    st.textures = info.memory.textures;
+    st.geometries = info.memory.geometries;
     this._fpsAcc += rawDt;
     this._fpsFrames++;
     if (this._fpsAcc >= 0.5) {
