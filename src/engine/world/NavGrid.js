@@ -13,6 +13,8 @@ export class NavGrid {
     this.world = world;
     this.res = res;
     this.radius = radius;
+    // nodes sit on multiples of 1/res (0.5, 1, 1.5…), so every tile centre is a
+    // node and one-tile-wide passages (doors, narrow stairs) stay walkable
     this.w = world.map.width * res;
     this.d = world.map.depth * res;
     this.walk = null;
@@ -25,7 +27,7 @@ export class NavGrid {
     this.h = new Float32Array(w * d);
     for (let j = 0; j < d; j++) {
       for (let i = 0; i < w; i++) {
-        const x = (i + 0.5) / res, z = (j + 0.5) / res;
+        const x = this._coord(i), z = this._coord(j);
         const g = world.groundAt(x, z);
         const k = j * w + i;
         this.h[k] = g;
@@ -41,7 +43,7 @@ export class NavGrid {
     const { res, w } = this;
     for (let j = Math.max(0, Math.floor(minZ * res)); j <= Math.min(this.d - 1, Math.ceil(maxZ * res)); j++) {
       for (let i = Math.max(0, Math.floor(minX * res)); i <= Math.min(w - 1, Math.ceil(maxX * res)); i++) {
-        const x = (i + 0.5) / res, z = (j + 0.5) / res;
+        const x = this._coord(i), z = this._coord(j);
         const g = this.world.groundAt(x, z);
         this.h[j * w + i] = g;
         this.walk[j * w + i] = this.world.canStand(x, z, this.radius, g, null, true) ? 1 : 0;
@@ -49,9 +51,13 @@ export class NavGrid {
     }
   }
 
+  _coord(i) {
+    return (i + 1) / this.res;
+  }
+
   _node(x, z) {
-    const i = Math.max(0, Math.min(this.w - 1, Math.floor(x * this.res)));
-    const j = Math.max(0, Math.min(this.d - 1, Math.floor(z * this.res)));
+    const i = Math.max(0, Math.min(this.w - 1, Math.round(x * this.res) - 1));
+    const j = Math.max(0, Math.min(this.d - 1, Math.round(z * this.res) - 1));
     return j * this.w + i;
   }
 
@@ -144,7 +150,7 @@ export class NavGrid {
     let k = goal;
     while (k !== start) { k = came.get(k); nodes.push(k); }
     nodes.reverse();
-    const pts = nodes.map((n) => [((n % w) + 0.5) / this.res, (Math.floor(n / w) + 0.5) / this.res]);
+    const pts = nodes.map((n) => [this._coord(n % w), this._coord(Math.floor(n / w))]);
     if (exactGoal) pts[pts.length - 1] = [x1, z1];
     // string pulling
     const out = [];

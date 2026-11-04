@@ -95,6 +95,26 @@ void hdCutout() {
 `;
 
 /**
+ * Injection points (three.js shader chunks) that could not be found. If a
+ * three.js upgrade renames a chunk, the matching feature would silently
+ * vanish; instead it is recorded here and reported once in the console.
+ * tests/unit/materialPatch.test.js fails when this is not empty.
+ */
+export const missingInjections = new Set();
+
+function inject(src, target, replacement, label) {
+  if (!src.includes(target)) {
+    const key = `${label}: ${target}`;
+    if (!missingInjections.has(key)) {
+      missingInjections.add(key);
+      console.warn(`[hd2d] shader injection point missing (${key}); this three.js version may be incompatible.`);
+    }
+    return src;
+  }
+  return src.replace(target, replacement);
+}
+
+/**
  * Inject engine features into a built-in three.js material:
  *  - billboard: rotate the quad around Y to face the camera (yaw only),
  *               so sprites stay upright like HD-2D characters.
@@ -117,19 +137,21 @@ export function patchMaterial(material, { billboard = false, wind = 0, windHeigh
     if (useCutout) defs += '#define HD_CUTOUT\n';
     if (needWorld) defs += '#define HD_WORLDPOS\n';
     if (flip) defs += '#define HD_FLIP\n';
-    let vs = shader.vertexShader.replace('#include <common>', `#include <common>\n${defs}${VERT_PARS}`);
+    const kind = material.type;
+    let vs = inject(shader.vertexShader, '#include <common>', `#include <common>\n${defs}${VERT_PARS}`, `${kind} vertex`);
     if (billboard && vs.includes('#include <beginnormal_vertex>')) {
-      vs = vs.replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = hdBillboard(objectNormal);');
+      vs = inject(vs, '#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = hdBillboard(objectNormal);', `${kind} vertex`);
     }
     let begin = '#include <begin_vertex>\n';
     if (wind > 0) begin += WIND;
     if (billboard) begin += 'transformed = hdBillboard(transformed);\n';
-    vs = vs.replace('#include <begin_vertex>', begin);
+    vs = inject(vs, '#include <begin_vertex>', begin, `${kind} vertex`);
     if (flip) {
-      vs = vs.replace('#include <uv_vertex>', '#include <uv_vertex>\n#ifdef USE_MAP\nif (aFlip > 0.5) vMapUv.x = 1.0 - vMapUv.x;\n#endif');
+      vs = inject(vs, '#include <uv_vertex>', '#include <uv_vertex>\n#ifdef USE_MAP\nif (aFlip > 0.5) vMapUv.x = 1.0 - vMapUv.x;\n#endif', `${kind} vertex`);
     }
     if (needWorld) {
-      vs = vs.replace(
+      vs = inject(
+        vs,
         '#include <project_vertex>',
         `#include <project_vertex>
         #ifdef USE_INSTANCING
@@ -137,16 +159,19 @@ export function patchMaterial(material, { billboard = false, wind = 0, windHeigh
         #else
           vHdWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;
         #endif`,
+        `${kind} vertex`,
       );
       for (const k of ['uCloudStrength', 'uCloudScale', 'uCloudSpeed', 'uResolution', 'uCutCenter', 'uCutRadius', 'uCutDist', 'uCutY', 'uCutStrength']) {
         shader.uniforms[k] = globalUniforms[k];
       }
-      let fs = shader.fragmentShader.replace('#include <common>', `#include <common>\n${defs}${FRAG_PARS}`);
-      if (useCutout) fs = fs.replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nhdCutout();');
+      let fs = inject(shader.fragmentShader, '#include <common>', `#include <common>\n${defs}${FRAG_PARS}`, `${kind} fragment`);
+      if (useCutout) fs = inject(fs, '#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nhdCutout();', `${kind} fragment`);
       if (useClouds) {
-        fs = fs.replace(
+        fs = inject(
+          fs,
           '#include <lights_fragment_end>',
           '#include <lights_fragment_end>\nreflectedLight.directDiffuse *= 1.0 - hdCloudShadow();',
+          `${kind} fragment`,
         );
       }
       shader.fragmentShader = fs;

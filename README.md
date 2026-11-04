@@ -239,6 +239,34 @@ All sound is synthesised at runtime with the Web Audio API, so there are no audi
 - **Ambience:** drifting wind (stronger on the plateau), a waterfall and river that fade and pan with your position, a crackling campfire, birdsong by day, crickets at night.
 - **Effects:** footsteps that change with the ground (grass, dirt, sand, stone, wooden decks), a per-character dialogue "voice", UI ticks, the crystal's bell arpeggio, a lullaby when resting, a chime for location banners.
 
+## Tests
+
+```bash
+npm test
+```
+
+Unit tests run in plain Node (`node --test`), finish in under a second and cover:
+
+- path finding, step limits and colliders
+- the Tiled importer (against the real `inn.tmj`) and the native format round-trip
+- event scripts
+- the music generator's harmony
+- saving, including blocked storage
+- the shader injections. If a three.js upgrade renames a shader chunk the engine hooks into, this test fails instead of an effect silently disappearing. At runtime the engine also warns once in the console: `[hd2d] shader injection point missing`.
+
+```bash
+npm run test:e2e
+```
+
+Browser tests start their own Vite server and drive headless Chromium through [Playwright](https://playwright.dev). The game runs in deterministic `?manual` mode, stepped frame by frame. They check that:
+
+- the village and inn boot without console errors and render a lit, non-blank frame
+- every quality preset applies
+- the tool pages load
+- the whole player loop works: opening cutscene, entering the inn, the innkeeper's path-found welcome, renting a room, leaving, and **Continue** after a reload
+
+They use software WebGL, so they need no GPU. Expect a few minutes on CI. On a new machine, install the browser once with `npx playwright install chromium`.
+
 ## Credits
 
 - Built on [three.js](https://threejs.org) (`0.186.1`) and [lil-gui](https://lil-gui.georgealways.com), with [Vite](https://vite.dev) for development.
