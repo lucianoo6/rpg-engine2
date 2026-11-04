@@ -4,6 +4,7 @@ import { Water, Waterfall } from '../engine/world/Water.js';
 import { StaticBatch } from '../engine/world/StaticBatch.js';
 import * as Props from '../engine/world/Props.js';
 import { SpriteInstances } from '../engine/sprites/SpriteInstances.js';
+import { TrunkInstances } from '../engine/world/Trunks.js';
 import { Billboard } from '../engine/sprites/Billboard.js';
 import { toTexture, toNormalTexture } from '../engine/pixel/PixelCanvas.js';
 import * as SF from '../engine/pixel/SpriteFactory.js';
@@ -329,15 +330,23 @@ function buildFoliage(scene, map, world, rng, { noDecor, spots, out }) {
   const tex = (pc) => toTexture(pc);
   // volumetric foliage: albedo + pixel normal map, so real lights shape it
   const vol = (pc, o) => new SpriteInstances(toTexture(pc), { ...o, normalMap: toNormalTexture(pc.normal), sunFacingShadow: true });
+  // real 3D lower trunks under the canopies (?trunks=sprite keeps painted ones, for comparison)
+  const trunk3d = !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('trunks') === 'sprite');
+  const treeKind = (paint, opts, o) => {
+    const pc = paint({ ...opts, normals: true, trunk3d });
+    const set = vol(pc, o);
+    if (trunk3d) set.trunks = new TrunkInstances(pc.trunk, { bark: opts.bark || (paint === SF.paintPine ? '#5e4030' : '#6b4a30'), seed: opts.seed, capacity: o.capacity });
+    return set;
+  };
   const trees = [
-    vol(SF.paintTree({ seed: 3, normals: true }), { capacity: 160, wind: 0.08 }),
-    vol(SF.paintTree({ seed: 17, leaf: '#5a9440', normals: true }), { capacity: 160, wind: 0.08 }),
-    vol(SF.paintTree({ seed: 11, leaf: '#5d9a45', fruit: '#d83a3a', normals: true }), { capacity: 40, wind: 0.08 }),
-    vol(SF.paintTree({ seed: 7, leaf: '#c9773a', bark: '#5d4030', normals: true }), { capacity: 40, wind: 0.08 }),
+    treeKind(SF.paintTree, { seed: 3 }, { capacity: 160, wind: 0.08 }),
+    treeKind(SF.paintTree, { seed: 17, leaf: '#5a9440' }, { capacity: 160, wind: 0.08 }),
+    treeKind(SF.paintTree, { seed: 11, leaf: '#5d9a45', fruit: '#d83a3a' }, { capacity: 40, wind: 0.08 }),
+    treeKind(SF.paintTree, { seed: 7, leaf: '#c9773a', bark: '#5d4030' }, { capacity: 40, wind: 0.08 }),
   ];
   const pines = [
-    vol(SF.paintPine({ seed: 5, normals: true }), { capacity: 200, wind: 0.05 }),
-    vol(SF.paintPine({ seed: 9, leaf: '#3a7350', tiers: 6, normals: true }), { capacity: 200, wind: 0.05 }),
+    treeKind(SF.paintPine, { seed: 5 }, { capacity: 200, wind: 0.05 }),
+    treeKind(SF.paintPine, { seed: 9, leaf: '#3a7350', tiers: 6 }, { capacity: 200, wind: 0.05 }),
   ];
   const bushes = [
     vol(SF.paintBush({ seed: 2, normals: true }), { capacity: 120, wind: 0.04 }),
@@ -376,12 +385,14 @@ function buildFoliage(scene, map, world, rng, { noDecor, spots, out }) {
     const s = rng.range(0.85, 1.15);
     const flip = rng.chance(0.5);
     const tint = rng.pick(tints);
-    if (kind === 'pine') rng.pick(pines).add(x, y, z, { scale: s, flip, tint });
+    let set;
+    if (kind === 'pine') set = rng.pick(pines);
     else {
       const r = rng.next();
-      const set = r < 0.42 ? trees[0] : r < 0.84 ? trees[1] : r < 0.92 ? trees[2] : trees[3];
-      set.add(x, y, z, { scale: s, flip, tint });
+      set = r < 0.42 ? trees[0] : r < 0.84 ? trees[1] : r < 0.92 ? trees[2] : trees[3];
     }
+    set.add(x, y, z, { scale: s, flip, tint });
+    if (set.trunks) set.trunks.add(x, y, z, { scale: s, rot: (x * 12.9898 + z * 78.233) % (Math.PI * 2), tint });
     trunks.push({ x, z, s, pine: kind === 'pine' });
     world.addCircle(x, z, 0.38, 'tree');
   };
@@ -515,6 +526,13 @@ function buildFoliage(scene, map, world, rng, { noDecor, spots, out }) {
   blobs.renderOrder = 2;
   blobs.frustumCulled = false;
   scene.add(blobs);
+
+  for (const set of [...trees, ...pines]) {
+    if (!set.trunks || set.trunks.count === 0) continue;
+    set.trunks.finalize();
+    set.trunks.frustumCulled = false;
+    scene.add(set.trunks);
+  }
 
   const groundCover = [...tufts, ...flowers, reeds];
   for (const s of all) {

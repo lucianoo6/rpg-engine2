@@ -72,10 +72,55 @@ function paintTrunk(pc, { cx, top, bottom, base = 2.5, flare = 2.6, bark, seed }
       }
       if ((x * 7 + Math.floor(y / 3)) % 5 === 0 && k > 0) k -= 1; // bark grain
       pc.set(x, y, br[k]);
+      if (pc.trunkPixels) pc.trunkPixels.push([x, y, br[k]]);
       // round trunk; the flaring roots tilt their normals up and outwards
       setN(pc, x, y, nx, t > 0.82 ? -0.5 * (t - 0.82) * 5 : 0, Math.sqrt(Math.max(0.05, 1 - nx * nx)));
     }
   }
+}
+
+/**
+ * For trees whose lower trunk is a real 3D mesh (see world/Trunks.js):
+ * erase the trunk pixels the canopy left visible and report where the
+ * mesh has to reach, in sprite pixels above the bottom edge.
+ */
+function cutTrunk(pc, { cx, base }) {
+  const px = pc.trunkPixels;
+  delete pc.trunkPixels;
+  const still = ([x, y, c]) => {
+    const q = pc.get(x, y);
+    return q && q[3] && q[0] === c[0] && q[1] === c[1] && q[2] === c[2];
+  };
+  // highest row where the trunk shows below the canopy at its centre
+  let top = pc.h;
+  for (const p of px) if (Math.abs(p[0] + 0.5 - cx) < 1.5 && still(p)) top = Math.min(top, p[1]);
+  for (const p of px) {
+    if (p[1] < top || !still(p)) continue;
+    pc.clear(p[0], p[1]);
+    if (pc.normal) pc.normal.clear(p[0], p[1]);
+  }
+  // the mesh tucks a few pixels up behind the leaves
+  pc.trunk = { height: pc.h - top + 3, radius: base + 1 };
+}
+
+/**
+ * Tileable bark for 3D trunks: vertical grain on a ramp, no baked side
+ * shading (the scene lights the cylinder). `w` pixels wrap around once.
+ */
+export function paintBark({ bark = '#6b4a30', seed = 1, w = 16, h = 32 } = {}) {
+  const pc = new PixelCanvas(w, h);
+  const br = ramp(bark, 5, 0.075);
+  for (let x = 0; x < w; x++) {
+    const col = valueNoise(x * 0.9, 0, seed);
+    for (let y = 0; y < h; y++) {
+      const n = valueNoise(x * 0.9, y / 4, seed + 3) * 0.6 + col * 0.4;
+      let k = n > 0.66 ? 1 : n < 0.36 ? 3 : 2;
+      if ((x * 7 + Math.floor(y / 3)) % 5 === 0 && k < 4) k += 1; // grain crevices
+      if (valueNoise(x * 2.1, y * 0.7, seed + 7) > 0.8) k = Math.max(0, k - 1); // worn ridges
+      pc.set(x, y, br[k]);
+    }
+  }
+  return pc;
 }
 
 function blobSurface(blobs, x, y) {
@@ -138,10 +183,11 @@ function paintCanopy(pc, blobs, { leaf, seed, cy, clump = 5, highlight = true })
   }
 }
 
-export function paintTree({ seed = 1, w = 80, h = 96, leaf = '#4f8c3b', bark = '#6b4a30', fruit = null, density = 1, normals = false } = {}) {
+export function paintTree({ seed = 1, w = 80, h = 96, leaf = '#4f8c3b', bark = '#6b4a30', fruit = null, density = 1, normals = false, trunk3d = false } = {}) {
   const rng = new RNG(seed);
   const pc = new PixelCanvas(w, h);
   if (normals) pc.normal = new PixelCanvas(w, h);
+  if (trunk3d) pc.trunkPixels = [];
   const cx = w / 2;
   paintTrunk(pc, { cx, top: h * 0.42, bottom: h - 1, base: 3, bark, seed });
   // branches reaching into the canopy
@@ -183,15 +229,17 @@ export function paintTree({ seed = 1, w = 80, h = 96, leaf = '#4f8c3b', bark = '
       }
     }
   }
+  if (trunk3d) cutTrunk(pc, { cx, base: 3 });
   pc.outline({ darken: 0.28 });
   finishNormals(pc);
   return pc;
 }
 
-export function paintPine({ seed = 1, w = 56, h = 104, leaf = '#2f6a4c', bark = '#5e4030', tiers = 5, normals = false } = {}) {
+export function paintPine({ seed = 1, w = 56, h = 104, leaf = '#2f6a4c', bark = '#5e4030', tiers = 5, normals = false, trunk3d = false } = {}) {
   const rng = new RNG(seed);
   const pc = new PixelCanvas(w, h);
   if (normals) pc.normal = new PixelCanvas(w, h);
+  if (trunk3d) pc.trunkPixels = [];
   const cx = w / 2;
   paintTrunk(pc, { cx, top: h * 0.7, bottom: h - 1, base: 2.5, bark, seed, flare: 2 });
   const lr = ramp(leaf, 6, 0.07);
@@ -238,6 +286,7 @@ export function paintPine({ seed = 1, w = 56, h = 104, leaf = '#2f6a4c', bark = 
       pc.set(x, y, lr[quant(lit * 1.08, 6, x, y)]);
     }
   }
+  if (trunk3d) cutTrunk(pc, { cx, base: 2.5 });
   pc.outline({ darken: 0.26 });
   finishNormals(pc);
   return pc;
