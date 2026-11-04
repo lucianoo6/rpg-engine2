@@ -420,7 +420,7 @@
      "rotation": 0,
      "visible": true,
      "x": 104.0,
-     "y": 29.6,
+     "y": 32.0,
      "width": 0,
      "height": 0,
      "point": true,
@@ -497,9 +497,9 @@
      "type": "counter",
      "rotation": 0,
      "visible": true,
-     "x": 73.6,
-     "y": 36.8,
-     "width": 60.8,
+     "x": 76.8,
+     "y": 44.0,
+     "width": 54.4,
      "height": 11.2,
      "properties": [
       {
@@ -515,11 +515,10 @@
      "type": "shelf",
      "rotation": 0,
      "visible": true,
-     "x": 84.8,
-     "y": 20.0,
-     "width": 0,
-     "height": 0,
-     "point": true,
+     "x": 72.0,
+     "y": 16.32,
+     "width": 25.6,
+     "height": 4.8,
      "properties": [
       {
        "name": "facing",
@@ -534,11 +533,10 @@
      "type": "shelf",
      "rotation": 0,
      "visible": true,
-     "x": 123.2,
-     "y": 20.0,
-     "width": 0,
-     "height": 0,
-     "point": true,
+     "x": 110.4,
+     "y": 16.32,
+     "width": 25.6,
+     "height": 4.8,
      "properties": [
       {
        "name": "facing",
@@ -710,17 +708,6 @@
     },
     {
      "id": 20,
-     "name": "",
-     "type": "table",
-     "rotation": 0,
-     "visible": true,
-     "x": 149.6,
-     "y": 23.2,
-     "width": 14.4,
-     "height": 14.4
-    },
-    {
-     "id": 21,
      "name": "bedInspect",
      "type": "inspect",
      "rotation": 0,
@@ -749,7 +736,7 @@
      ]
     },
     {
-     "id": 22,
+     "id": 21,
      "name": "",
      "type": "barrel",
      "rotation": 0,
@@ -761,7 +748,7 @@
      "point": true
     },
     {
-     "id": 23,
+     "id": 22,
      "name": "",
      "type": "barrel",
      "rotation": 0,
@@ -773,7 +760,7 @@
      "point": true
     },
     {
-     "id": 24,
+     "id": 23,
      "name": "",
      "type": "crate",
      "rotation": 0,
@@ -792,7 +779,7 @@
      ]
     },
     {
-     "id": 25,
+     "id": 24,
      "name": "",
      "type": "crate",
      "rotation": 0,
@@ -811,7 +798,7 @@
      ]
     },
     {
-     "id": 26,
+     "id": 25,
      "name": "",
      "type": "rug",
      "rotation": 0,
@@ -822,7 +809,7 @@
      "height": 35.2
     },
     {
-     "id": 27,
+     "id": 26,
      "name": "",
      "type": "rug",
      "rotation": 0,
@@ -840,7 +827,7 @@
      ]
     },
     {
-     "id": 28,
+     "id": 27,
      "name": "",
      "type": "window",
      "rotation": 0,
@@ -864,7 +851,7 @@
      ]
     },
     {
-     "id": 29,
+     "id": 28,
      "name": "",
      "type": "window",
      "rotation": 0,
@@ -888,7 +875,7 @@
      ]
     },
     {
-     "id": 30,
+     "id": 29,
      "name": "",
      "type": "shaft",
      "rotation": 0,
@@ -927,7 +914,7 @@
      ]
     },
     {
-     "id": 31,
+     "id": 30,
      "name": "",
      "type": "shaft",
      "rotation": 0,
@@ -966,7 +953,7 @@
      ]
     },
     {
-     "id": 32,
+     "id": 31,
      "name": "",
      "type": "particles",
      "rotation": 0,
@@ -989,7 +976,7 @@
      ]
     },
     {
-     "id": 33,
+     "id": 32,
      "name": "barLamp",
      "type": "light",
      "rotation": 0,
@@ -1023,7 +1010,7 @@
      ]
     },
     {
-     "id": 34,
+     "id": 33,
      "name": "eastLamp",
      "type": "light",
      "rotation": 0,
@@ -1057,7 +1044,7 @@
      ]
     },
     {
-     "id": 35,
+     "id": 34,
      "name": "westLamp",
      "type": "light",
      "rotation": 0,
@@ -1091,7 +1078,7 @@
      ]
     },
     {
-     "id": 36,
+     "id": 35,
      "name": "",
      "type": "sprite",
      "rotation": 0,
@@ -1120,7 +1107,7 @@
      ]
     },
     {
-     "id": 37,
+     "id": 36,
      "name": "",
      "type": "sprite",
      "rotation": 0,
@@ -1152,7 +1139,7 @@
   }
  ],
  "nextlayerid": 4,
- "nextobjectid": 38,
+ "nextobjectid": 37,
  "orientation": "orthogonal",
  "renderorder": "right-down",
  "tiledversion": "1.11.0",
@@ -1199,7 +1186,7 @@
   {
    "name": "scripts",
    "type": "string",
-   "value": "{\"room\": [{\"do\": \"choose\", \"who\": \"Marta\", \"text\": \"A room for the night? Ten coppers, breakfast included.\", \"options\": [\"Yes, please\", \"Maybe later\"], \"then\": [[{\"do\": \"flag\", \"set\": \"rentedRoom\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"The bed by the window is yours. I'll wake you with the bread.\"}, {\"do\": \"fade\", \"to\": 1, \"s\": 0.8}, {\"do\": \"time\", \"hour\": 7.5, \"s\": 2.5}, {\"do\": \"fade\", \"to\": 0, \"s\": 0.8}, {\"do\": \"banner\", \"title\": \"Morning\", \"subtitle\": \"The smell of fresh bread drifts up from the kitchen\"}, {\"do\": \"save\"}], [{\"do\": \"say\", \"who\": \"Marta\", \"text\": \"The fire's warm whenever you change your mind.\"}]]}], \"welcome\": [{\"do\": \"emote\", \"who\": \"Marta\", \"icon\": \"!\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"Oh! A customer!\"}, {\"do\": \"walk\", \"who\": \"Marta\", \"to\": \"player\"}, {\"do\": \"face\", \"who\": \"player\", \"to\": \"Marta\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"Welcome to the Sleeping Fox. Mind the step, and mind Rook over there. He cheats at cards.\"}, {\"do\": \"emote\", \"who\": \"Rook\", \"icon\": \"♪\", \"wait\": false}, {\"do\": \"run\", \"script\": \"room\"}, {\"do\": \"walk\", \"who\": \"Marta\", \"to\": [6.5, 1.85]}, {\"do\": \"face\", \"who\": \"Marta\", \"to\": [6.5, 6]}]}"
+   "value": "{\"room\": [{\"do\": \"choose\", \"who\": \"Marta\", \"text\": \"A room for the night? Ten coppers, breakfast included.\", \"options\": [\"Yes, please\", \"Maybe later\"], \"then\": [[{\"do\": \"flag\", \"set\": \"rentedRoom\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"The bed by the window is yours. I'll wake you with the bread.\"}, {\"do\": \"fade\", \"to\": 1, \"s\": 0.8}, {\"do\": \"time\", \"hour\": 7.5, \"s\": 2.5}, {\"do\": \"fade\", \"to\": 0, \"s\": 0.8}, {\"do\": \"banner\", \"title\": \"Morning\", \"subtitle\": \"The smell of fresh bread drifts up from the kitchen\"}, {\"do\": \"save\"}], [{\"do\": \"say\", \"who\": \"Marta\", \"text\": \"The fire's warm whenever you change your mind.\"}]]}], \"welcome\": [{\"do\": \"emote\", \"who\": \"Marta\", \"icon\": \"!\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"Oh! A customer!\"}, {\"do\": \"walk\", \"who\": \"Marta\", \"to\": \"player\"}, {\"do\": \"face\", \"who\": \"player\", \"to\": \"Marta\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"Welcome to the Sleeping Fox. Mind the step, and mind Rook over there. He cheats at cards.\"}, {\"do\": \"emote\", \"who\": \"Rook\", \"icon\": \"♪\", \"wait\": false}, {\"do\": \"run\", \"script\": \"room\"}, {\"do\": \"walk\", \"who\": \"Marta\", \"to\": [6.5, 2.0]}, {\"do\": \"face\", \"who\": \"Marta\", \"to\": [6.5, 6]}]}"
   }
  ],
  "tilesets": [

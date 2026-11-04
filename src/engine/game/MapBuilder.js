@@ -63,5 +63,8 @@ export async function buildMap(id, data, { prefabs, game }) {
     await fn(o, ctx);
   }
   map.root.add(batch.build({ name: id }));
+  // prefabs built earlier (e.g. wandering NPCs) may already hold the nav grid;
+  // rebuild it in place now that every obstacle exists
+  if (map.nav) map.nav.build();
   return map;
 }

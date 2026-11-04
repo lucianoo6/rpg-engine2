@@ -1,7 +1,8 @@
 /**
  * Grid path finding over a World. Nodes sit every 1/res units; a node is
  * walkable when a character of `radius` could stand there against static
- * obstacles (tiles, props, trees — other characters are ignored), and an
+ * obstacles (tiles, props, trees — other characters are ignored). The default
+ * radius is a little larger than a character's so paths keep clearance. An
  * edge is valid when the height change fits the world's step limit.
  *
  * findPath() runs A* (8-way, no corner cutting) and then pulls the string
