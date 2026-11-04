@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Textures } from '../pixel/TextureFactory.js';
 import { worldMaterial } from '../render/Materials.js';
 import { hash2 } from '../core/Random.js';
+import { patchMaterial } from '../render/MaterialPatch.js';
 
 /**
  * Turns a TileMap into merged block geometry, one mesh per texture.
@@ -52,6 +53,11 @@ export function buildTerrain(map, { edgeDepth = -4 } = {}) {
     return buckets.get(name);
   };
   const H = (i, j) => (map.inBounds(i, j) ? map.h(i, j) : edgeDepth);
+  const fringes = new Map();
+  const fringe = (name) => {
+    if (!fringes.has(name)) fringes.set(name, new Bucket());
+    return fringes.get(name);
+  };
 
   for (let j = 0; j < map.depth; j++) {
     for (let i = 0; i < map.width; i++) {
@@ -79,6 +85,30 @@ export function buildTerrain(map, { edgeDepth = -4 } = {}) {
         [ca, cb, cc, cd],
         ca + cc < cb + cd,
       );
+
+      // ---- soft border: this tile's fringe spills onto lower-priority neighbours ----
+      if (t.fringe) {
+        const depth = 0.5;
+        const fr = [
+          [0, 1, (y) => [[i, y, j + 1], [i + 1, y, j + 1], [i + 1, y, j + 1 + depth], [i, y, j + 1 + depth]], i, 0.008],
+          [0, -1, (y) => [[i + 1, y, j], [i, y, j], [i, y, j - depth], [i + 1, y, j - depth]], -(i + 1), 0.010],
+          [1, 0, (y) => [[i + 1, y, j], [i + 1, y, j + 1], [i + 1 + depth, y, j + 1], [i + 1 + depth, y, j]], j, 0.012],
+          [-1, 0, (y) => [[i, y, j + 1], [i, y, j], [i - depth, y, j], [i - depth, y, j + 1]], -(j + 1), 0.014],
+        ];
+        for (const [di, dj, pts, u0, lift] of fr) {
+          const nt = map.typeAt(i + di, j + dj);
+          if (!nt || Math.abs(H(i + di, j + dj) - h) > 0.01) continue;
+          if ((nt.priority ?? 99) >= (t.priority ?? 0) || nt.fringe) continue;
+          // u runs along the edge (texture spans 2 units), v from the edge (1) outwards (0)
+          const u = u0 / 2;
+          let p = pts(h + lift);
+          let uv = [[u, 1], [u + 0.5, 1], [u + 0.5, 0], [u, 0]];
+          // keep the quad facing up (counter-clockwise seen from above)
+          const ax = p[1][0] - p[0][0], az = p[1][2] - p[0][2], bx = p[2][0] - p[0][0], bz = p[2][2] - p[0][2];
+          if (az * bx - ax * bz < 0) { p = p.reverse(); uv = uv.reverse(); }
+          fringe(t.fringe).quad(p, [0, 1, 0], uv, [tint, tint, tint, tint]);
+        }
+      }
 
       // ---- side faces ----
       const sideTex = Textures[t.side]();
@@ -113,6 +143,15 @@ export function buildTerrain(map, { edgeDepth = -4 } = {}) {
     const mesh = new THREE.Mesh(b.build(), worldMaterial(name, { vertexColors: true }));
     mesh.name = `terrain:${name}`;
     mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+  }
+  for (const [name, b] of fringes) {
+    const mat = new THREE.MeshLambertMaterial({ map: Textures[name](), vertexColors: true, alphaTest: 0.5 });
+    patchMaterial(mat, { clouds: true });
+    mat.name = `fringe:${name}`;
+    const mesh = new THREE.Mesh(b.build(), mat);
+    mesh.name = `terrain:fringe:${name}`;
     mesh.receiveShadow = true;
     group.add(mesh);
   }

@@ -25,13 +25,16 @@ const ZONES = [
 // Opening cutscene, in the same JSON command format a Tiled map uses.
 const PIP_GREETING = [
   { do: 'wait', s: 0.4 },
-  { do: 'emote', who: 'Pip', icon: '!' },
+  { do: 'emote', who: 'Pip', icon: '!', wait: false },
+  { do: 'hop', who: 'Pip' },
+  { do: 'wait', s: 0.6 },
   { do: 'walk', who: 'Pip', to: 'player', run: true },
   { do: 'face', who: 'player', to: 'Pip' },
   { do: 'say', who: 'Pip', text: 'A visitor! Nobody ever visits Hollowbrook. Are you lost? Are you a knight?' },
   { do: 'emote', who: 'player', icon: '…' },
   { do: 'say', who: 'Pip', text: "...You don't talk much. That's fine! The inn is up past the well, and the Elder is by the crystal." },
   { do: 'emote', who: 'Pip', icon: '♪', wait: false },
+  { do: 'hop', who: 'Pip' },
   { do: 'walk', who: 'Pip', to: [25.5, 30.2], run: true, wait: false },
   { do: 'flag', set: 'metPip' },
 ];

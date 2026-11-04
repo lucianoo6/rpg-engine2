@@ -20,11 +20,26 @@ const FRAMES = [
   { name: 'walkA', bob: -1, breath: 0, lift: [1, 0], swing: 1, stride: 1 },
   { name: 'pass', bob: 0, breath: 0, lift: [0, 0], swing: 0, stride: 0 },
   { name: 'walkB', bob: -1, breath: 0, lift: [0, 1], swing: -1, stride: -1 },
+  // running: longer stride, bigger arm swing, upper body leaning into the run
+  { name: 'runA', bob: -1, breath: 0, lift: [2, 0], swing: 2, stride: 2, lean: 1 },
+  { name: 'runPass', bob: 0, breath: 0, lift: [0, 0], swing: 0, stride: 0, lean: 1 },
+  { name: 'runB', bob: -1, breath: 0, lift: [0, 2], swing: -2, stride: -2, lean: 1 },
+  // talking: mouth open / closed
+  { name: 'talkOpen', bob: 0, breath: 0, lift: [0, 0], swing: 0, stride: 0, mouth: 1 },
+  { name: 'talkClosed', bob: 0, breath: 1, lift: [0, 0], swing: 0, stride: 0 },
 ];
 
 export const CHARACTER_ANIMATIONS = {
   idle: { frames: [0, 0, 1, 1], fps: 2.4 },
   walk: { frames: [2, 3, 4, 3], fps: 8, steps: [0, 2] },
+  run: { frames: [5, 6, 7, 6], fps: 12, steps: [0, 2] },
+  talk: { frames: [8, 9, 8, 0, 9], fps: 7 },
+};
+
+/** Animations for older 5-column sheets (no run / talk frames). */
+export const BASIC_CHARACTER_ANIMATIONS = {
+  idle: CHARACTER_ANIMATIONS.idle,
+  walk: CHARACTER_ANIMATIONS.walk,
   run: { frames: [2, 3, 4, 3], fps: 13, steps: [0, 2] },
 };
 
@@ -86,6 +101,7 @@ export function makeCharacterSheet(desc = {}) {
     for (const dir of ['down', 'left', 'up']) {
       const pc = new PixelCanvas(FRAME_W, FRAME_H);
       drawFrame(pc, dir, FRAMES[fi], o, pal, lay);
+      if (dir === 'left' && FRAMES[fi].lean) leanForward(pc, lay.legTop - 1, FRAMES[fi].lean);
       pc.outline({ darken: 0.34 });
       const row = DIRS.indexOf(dir);
       sheet.blit(pc, fi * FRAME_W, row * FRAME_H);
@@ -214,7 +230,7 @@ function drawArms(pc, dir, f, o, pal, lay, which) {
   if (dir === 'left') {
     // which: 'far' (behind torso) or 'near'
     const s = which === 'far' ? -f.swing : f.swing;
-    const ax = 10 - s * 2;
+    const ax = 10 - Math.round(s * 1.5);
     const r = which === 'far' ? pal.tunic.map((c) => shift(c, -0.1)) : pal.tunic;
     const sk = which === 'far' ? pal.skin.map((c) => shift(c, -0.08)) : pal.skin;
     for (let y = top; y < top + 5; y++) {
@@ -259,11 +275,18 @@ function drawHead(pc, dir, f, o, pal, lay) {
     }
     pc.set(8, ey + 2, shift(pal.skin[2], -0.04).map((v, i) => (i === 0 ? Math.min(255, v + 20) : v)));
     pc.set(15, ey + 2, shift(pal.skin[2], -0.04).map((v, i) => (i === 0 ? Math.min(255, v + 20) : v)));
+    if (f.mouth) {
+      const m = shift(pal.skin[0], -0.3);
+      pc.set(11, ey + 2, m);
+      pc.set(12, ey + 2, m);
+      pc.set(11, ey + 3, shift(pal.skin[0], -0.15));
+    }
   } else if (dir === 'left') {
     const ey = Math.round(hy) + 1;
     pc.set(7, ey - 1, pal.eyes);
     pc.set(7, ey, pal.eyes);
     pc.set(5, ey + 1, pal.skin[2]); // nose
+    if (f.mouth) pc.set(6, ey + 3, shift(pal.skin[0], -0.3));
   }
 }
 
@@ -484,6 +507,17 @@ function drawStaff(pc, dir, f, o, pal, lay, layer) {
   }
   pc.ellipse(x + 1, top, 2.2, 2.2, (px, py, nx, ny) => pal.orb[litIndex(nx, ny)]);
   pc.set(x, top - 1, [255, 255, 255]);
+}
+
+/** Shift every row above `rowLimit` towards the facing side (side view faces left). */
+function leanForward(pc, rowLimit, px) {
+  for (let y = 0; y < rowLimit; y++) {
+    for (let x = 0; x < pc.w; x++) {
+      const src = pc.get(x + px, y);
+      if (src && src[3]) pc.set(x, y, src);
+      else pc.clear(x, y);
+    }
+  }
 }
 
 function drawFrame(pc, dir, f, o, pal, lay) {

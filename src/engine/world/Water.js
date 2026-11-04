@@ -233,14 +233,60 @@ void main() {
   #include <fog_fragment>
 }`;
 
+/**
+ * Curved sheet of falling water. The profile rolls over the lip in a
+ * quarter circle, then falls away from the cliff (z grows with the square
+ * root of the drop, like a real jet), so it reads as water, not a panel.
+ * `height` is the total drop from the lip top to the pool.
+ */
+function waterfallGeometry(width, height, lip = 0.32, cols = 6, rows = 28) {
+  const fall = Math.max(0.1, height - lip);
+  const pts = []; // [y, z, s] along the profile, bottom to top
+  const nFall = Math.round(rows * 0.8), nLip = rows - nFall;
+  for (let k = 0; k <= nFall; k++) {
+    const y = (k / nFall) * fall;
+    pts.push([y, 0.05 + 0.42 * Math.sqrt((fall - y) / fall)]);
+  }
+  for (let k = 1; k <= nLip; k++) {
+    const th = Math.PI / 2 - (k / nLip) * (Math.PI / 2);
+    pts.push([fall + lip * Math.cos(th), 0.05 - lip + lip * Math.sin(th)]);
+  }
+  const lens = [0];
+  for (let k = 1; k < pts.length; k++) lens.push(lens[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]));
+  const total = lens[lens.length - 1];
+  const pos = [], uv = [], idx = [];
+  for (let k = 0; k < pts.length; k++) {
+    for (let c = 0; c <= cols; c++) {
+      const u = c / cols;
+      // the sheet narrows slightly as it falls
+      const squeeze = 1 - 0.06 * (1 - pts[k][0] / height);
+      pos.push((u - 0.5) * width * squeeze, pts[k][0], pts[k][1]);
+      uv.push(u, lens[k] / total);
+    }
+  }
+  for (let k = 0; k < pts.length - 1; k++) {
+    for (let c = 0; c < cols; c++) {
+      const a = k * (cols + 1) + c, b = a + 1, d = a + cols + 1, e = d + 1;
+      idx.push(a, b, e, a, e, d);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  g.userData.length = total;
+  return g;
+}
+
 export class Waterfall extends THREE.Mesh {
   constructor({ width = 3, height = 3, deep = '#3b7fa3', light = '#8fd3e6', foam = '#f2fbff' } = {}) {
-    const geometry = new THREE.PlaneGeometry(width, height);
-    geometry.translate(0, height / 2, 0);
+    const geometry = waterfallGeometry(width, height);
+    const length = geometry.userData.length;
     const uniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
     Object.assign(uniforms, {
       uTime: globalUniforms.uTime,
-      uSize: { value: new THREE.Vector2(width, height) },
+      uSize: { value: new THREE.Vector2(width, length) },
       uDeep: { value: new THREE.Color(deep) },
       uLight: { value: new THREE.Color(light) },
       uFoam: { value: new THREE.Color(foam) },

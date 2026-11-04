@@ -169,41 +169,50 @@ function paintLip(pc, grassBase, seed, maxDepth = 5) {
   }
 }
 
+/**
+ * Natural rock face: irregular, slightly flattened boulders (tileable voronoi)
+ * each lit like a faceted stone from the upper left, dark crevices between
+ * them, hairline cracks, moss on upward-facing ledges and a grassy lip.
+ */
 export function paintCliff({ base = '#8b8070', grass = '#5f9e3f', seed = 7, w = 64, h = 64 } = {}) {
   const pc = new PixelCanvas(w, h);
-  const r = ramp(base, 6, 0.065);
-  const rng = new RNG(seed);
-  let y = 0;
-  while (y < h) {
-    const lh = rng.int(6, 10);
-    let x = -rng.int(0, 10);
-    while (x < w) {
-      const bw = rng.int(9, 18);
-      const tone = rng.int(2, 3);
-      for (let j = 0; j < lh; j++) {
-        for (let i = 0; i < bw; i++) {
-          const px = x + i, py = y + j;
-          let t = tone;
-          if (i === 0 || j === lh - 1) t = 0;
-          else if (j === 0) t = tone + 2;
-          else if (j === 1 || i === 1) t = tone + 1;
-          else if (j >= lh - 3) t = tone - 1;
-          const n = fbm(((px % w) + w) % w / w, py / h, { freq: 10, octaves: 2, seed });
-          if (n > 0.7) t -= 1;
-          if (n < 0.25) t += 1;
-          pc.setWrap(px, py, r[clamp(t, 0, 5)]);
-        }
-      }
-      x += bw;
+  const r = ramp(base, 7, 0.06);
+  const moss = ramp('#5d7f3c', 3, 0.06);
+  const vor = makeVoronoi(w, 7, seed, 0.95);
+  const cellR = w / 7 / 2;
+  const squash = h / w; // keep the pattern periodic vertically
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      // sample a vertically squashed field so boulders read as wide ledges
+      const sy = (y + 0.5) / squash;
+      const v = vor(x + 0.5, (sy * 0.72) % w);
+      const edge = v.d2 - v.d1;
+      if (edge < 1.1) { pc.set(x, y, r[0]); continue; }
+      const nx = (x + 0.5 - v.cx) / cellR;
+      const ny = (((sy * 0.72) % w) - v.cy) / cellR;
+      const hv = hash2(v.id, 9, seed);
+      let lit = (-nx * 0.55 - ny * 0.85) * 0.5 + 0.5; // light from the upper left
+      lit = Math.round(lit * 3) / 3; // facets
+      let t = 2 + Math.floor(hv * 2.99) + Math.round((lit - 0.5) * 2);
+      if (edge < 2.4) t += nx + ny < 0 ? 1 : -1; // bevel: lit rim top-left, shade bottom-right
+      const n = fbm(x / w, y / h, { freq: 16, octaves: 2, seed: seed + 3 });
+      if (n > 0.74) t -= 1;
+      if (n < 0.2) t += 1;
+      let c = r[clamp(t, 1, 6)];
+      // moss collects on the upper faces of stones near the top of the cliff
+      if (ny < -0.35 && y < h * 0.55 && fbm(x / w, y / h, { freq: 8, octaves: 2, seed: seed + 5 }) > 0.55) c = moss[lit > 0.6 ? 2 : 1];
+      pc.set(x, y, c);
     }
-    y += lh;
   }
-  // moss streaks
-  const m = ramp('#557d3a', 3, 0.06);
-  for (let k = 0; k < w / 6; k++) {
-    const x = rng.int(0, w - 1);
-    const len = rng.int(3, 14);
-    for (let j = 0; j < len; j++) if (rng.chance(0.8)) pc.set(x, 5 + j, m[rng.int(0, 2)]);
+  // hairline cracks
+  const rng = new RNG(seed);
+  for (let k = 0; k < w / 10; k++) {
+    let x = rng.int(0, w - 1), y = rng.int(8, h - 6);
+    for (let s = 0; s < rng.int(3, 7); s++) {
+      pc.setWrap(x, y, r[0]);
+      y += 1;
+      x += rng.int(-1, 1);
+    }
   }
   paintLip(pc, grass, seed + 1, 6);
   return pc;
@@ -489,6 +498,27 @@ export function paintRug({ a = '#8f3a3a', b = '#d9b45a', c = '#2f4f6f', w = 48, 
   return pc;
 }
 
+/**
+ * Grass fringe strip (2 x 0.5 units) that spills over the edge of a grass
+ * tile onto a lower-priority neighbour. Row 0 is the shared edge; blades
+ * reach into the strip with irregular lengths and a shadow at their tips.
+ */
+export function paintFringe({ base = '#5f9e3f', seed = 50, w = 32, h = 8 } = {}) {
+  const pc = new PixelCanvas(w, h);
+  const r = ramp(base, 5, 0.06);
+  const shadow = [40, 32, 28];
+  const rng = new RNG(seed);
+  for (let x = 0; x < w; x++) {
+    const n = fbm(x / w, 0.5, { freq: 6, octaves: 2, seed });
+    let len = Math.round(1 + n * 4);
+    if (rng.chance(0.18)) len += rng.int(1, 3); // a few long blades
+    len = Math.min(h - 1, len);
+    for (let y = 0; y < len; y++) pc.set(x, y, r[y === 0 ? 2 : y === len - 1 ? 4 : (x + y) % 3 === 0 ? 1 : 3]);
+    pc.set(x, len, shadow, 255);
+  }
+  return pc;
+}
+
 export function paintFlat(color, size = 4) {
   return new PixelCanvas(size, size).fill(hex(color));
 }
@@ -552,6 +582,9 @@ export const Textures = {
   awning: () => getTexture('awning', () => paintStripes()),
   awningBlue: () => getTexture('awningBlue', () => paintStripes({ a: '#3f6fa8' })),
   iron: () => getTexture('iron', () => paintStone({ base: '#4c4d55', seed: 33, size: 8 })),
+  fringeGrass: () => getTexture('fringeGrass', () => paintFringe(), { mipmaps: false, clampV: true }),
+  fringeMeadow: () => getTexture('fringeMeadow', () => paintFringe({ base: '#79ad45', seed: 51 }), { mipmaps: false, clampV: true }),
+  fringeForest: () => getTexture('fringeForest', () => paintFringe({ base: '#477f3a', seed: 52 }), { mipmaps: false, clampV: true }),
   floorboards: () => getTexture('floorboards', () => paintPlanks({ base: '#9a6a42', seed: 41, w: 64, h: 64, plank: 8, vertical: false })),
   interiorWall: () => getTexture('interiorWall', () => paintInteriorWall(), { clampV: true }),
   rug: () => getTexture('rug', () => paintRug(), { repeat: false }),

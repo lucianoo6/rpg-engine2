@@ -89,6 +89,8 @@ scene ─► HDR target (half-float colour + depth, 4× MSAA)
 - **Stepped diorama terrain.** A tile map with heights in steps of 0.5 becomes merged block geometry with one mesh per texture. Tops use world-space UVs. Side textures are anchored to the top edge, so grassy lips line up on every step. Vertex colours bake voxel ambient occlusion plus per-tile tint variation.
 - **Pixel-art shading everywhere.** Painters light shapes with fake normals, quantise them onto hue-shifted ramps (shadows drift blue, highlights warm) with ordered dithering, then add selective outlines. Water and the waterfall snap to the same 16 texels-per-unit grid.
 - **Mood through time.** Each day/night keyframe holds sun and moon, bounce light, fog, exposure, grade, god-ray strength and cloud shadows. Lanterns, windows, fireflies and water reflections follow the night level.
+- **Soft ground borders.** Where grass meets a path, cobbles, a field or sand at the same height, a strip of grass blades spills over the edge, so ground types don't change in hard tile blocks. The tile type's `fringe` and `priority` control this.
+- **Characters that act.** Generated sheets have idle, walk, a separate leaning run, and a talking mouth that moves while the character's line types out. Cutscenes add `hop` reactions and emote balloons.
 - **Readable at any angle.** When geometry or foliage sits between the camera and the player, a dithered see-through hole opens in it.
 
 ## Engine overview
@@ -204,11 +206,11 @@ Save tile layers as CSV, and keep tilesets as JSON (`.tsj`) or embedded. Add you
 
 ### Sprites from files
 
-`loadSpriteSheet(url)` accepts an Aseprite JSON export or a PNG in the engine's character grid. Name Aseprite tags `<animation>_<direction>`, for example `idle_down` or `walk_left`. Frame durations set the speed, and forward, reverse and pingpong tags all work. Use `/export.html` to get any procedural character as a starting point you can repaint. The innkeeper in the inn is loaded this way.
+`loadSpriteSheet(url)` accepts an Aseprite JSON export or a PNG in the engine's character grid. Name Aseprite tags `<animation>_<direction>`, for example `idle_down`, `walk_left`, `run_up` or `talk_down`. `talk` plays while that character's line is typing out. Frame durations set the speed, and forward, reverse and pingpong tags all work. Use `/export.html` to get any procedural character as a starting point you can repaint. The innkeeper in the inn is loaded this way.
 
 ### Events and cutscenes
 
-Dialogue and cutscenes are JSON command lists (`say`, `choose`, `walk`, `face`, `emote`, `camera`, `fade`, `time`, `flag`, `if`, `warp`, `sound`, `banner`, `save`, `run`). `walk` uses the path finder, so actors go around furniture and up stairs. The full list is documented at the top of `src/engine/game/Events.js`. The village's opening scene and the inn's welcome are both written this way.
+Dialogue and cutscenes are JSON command lists (`say`, `choose`, `walk`, `face`, `emote`, `hop`, `camera`, `fade`, `time`, `flag`, `if`, `warp`, `sound`, `banner`, `save`, `run`). `walk` uses the path finder, so actors go around furniture and up stairs. The full list is documented at the top of `src/engine/game/Events.js`. The village's opening scene and the inn's welcome are both written this way.
 
 ### Saving
 

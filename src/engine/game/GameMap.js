@@ -31,7 +31,7 @@ export class GameMap {
       title: id, subtitle: '', indoor: null,
       camera: { distance: 23, pitch: 33, bounds: null },
     };
-    this.onUpdate = null; // (dt, t, state, game) => void
+    this.onUpdate = null; // (dt, t, state, { yaw, player, camera }) => void
     this.onEnter = null; // (game) => void, after activation
     this.nav = null;
     this.active = false;
@@ -75,7 +75,8 @@ export class GameMap {
   }
 
   /** Per-frame environment animation shared by all maps. */
-  update(dt, t, state, { yaw, player }) {
+  update(dt, t, state, ctx) {
+    const { yaw, player } = ctx;
     const night = state.night;
     for (const l of this.lights) l.update(t, night);
 
@@ -105,6 +106,6 @@ export class GameMap {
     for (const e of this.dayEmitters) e.level = shaftLevel;
     for (const e of this.emitters) e.update(dt, t);
     for (const f of this.flames) f.sprite.setFrame(Math.floor(t * f.fps + f.offset) % 8, 0);
-    if (this.onUpdate) this.onUpdate(dt, t, state);
+    if (this.onUpdate) this.onUpdate(dt, t, state, ctx);
   }
 }

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CHARACTER_ANIMATIONS, DIRS } from '../pixel/CharacterFactory.js';
+import { CHARACTER_ANIMATIONS, BASIC_CHARACTER_ANIMATIONS, DIRS } from '../pixel/CharacterFactory.js';
 
 /**
  * Sprite sheets from image files, in the same shape the procedural
@@ -11,7 +11,8 @@ import { CHARACTER_ANIMATIONS, DIRS } from '../pixel/CharacterFactory.js';
  *    `<animation>` for sheets without directions. Tag direction
  *    forward / reverse / pingpong is honoured; fps comes from frame durations.
  *  - Plain PNG in the engine's character grid layout (rows down, left,
- *    right, up; columns idle0, idle1, walkA, pass, walkB), e.g. a sheet
+ *    right, up; columns idle0, idle1, walkA, pass, walkB, then optionally
+ *    runA, runPass, runB, talkOpen, talkClosed), e.g. a sheet
  *    exported from the procedural generator and repainted by hand.
  */
 
@@ -65,7 +66,8 @@ export function sheetFromAseprite(json, texture) {
 export function sheetFromGrid(texture, { frameW = 24, frameH = 32 } = {}) {
   const cols = Math.round(texture.image.width / frameW);
   const rows = Math.round(texture.image.height / frameH);
-  return { texture, frameW, frameH, cols, rows, directions: DIRS.slice(0, rows), animations: CHARACTER_ANIMATIONS };
+  const animations = cols >= 10 ? CHARACTER_ANIMATIONS : BASIC_CHARACTER_ANIMATIONS;
+  return { texture, frameW, frameH, cols, rows, directions: DIRS.slice(0, rows), animations };
 }
 
 /** Load a sheet: `*.json` = Aseprite export (image path is relative to it), otherwise a grid PNG. */
@@ -93,12 +95,14 @@ export function gridSheetToAseprite(sheet, imageName) {
         rotated: false, trimmed: false,
         spriteSourceSize: { x: 0, y: 0, w: sheet.frameW, h: sheet.frameH },
         sourceSize: { w: sheet.frameW, h: sheet.frameH },
-        duration: c < 2 ? 420 : 125,
+        duration: c < 2 ? 420 : c < 5 ? 125 : c < 8 ? 83 : 140,
       });
     }
     const base = r * sheet.cols;
     tags.push({ name: `idle_${sheet.directions[r]}`, from: base, to: base + 1, direction: 'forward' });
     tags.push({ name: `walk_${sheet.directions[r]}`, from: base + 2, to: base + 4, direction: 'pingpong' });
+    if (sheet.cols >= 8) tags.push({ name: `run_${sheet.directions[r]}`, from: base + 5, to: base + 7, direction: 'pingpong' });
+    if (sheet.cols >= 10) tags.push({ name: `talk_${sheet.directions[r]}`, from: base + 8, to: base + 9, direction: 'forward' });
   }
   return {
     frames,

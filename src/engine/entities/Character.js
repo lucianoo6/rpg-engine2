@@ -55,6 +55,16 @@ export class Character {
     this.collider = solid ? world.addCircle(x, z, radius, this) : null;
     this.lockFacing = false;
     this._path = null;
+    this.talking = false; // plays the 'talk' animation while idle (set by the dialogue)
+    this._hop = null;
+  }
+
+  /** A little jump of surprise or joy. Resolves when the character lands. */
+  hop(height = 0.32, duration = 0.3) {
+    return new Promise((resolve) => {
+      if (this._hop) this._hop.resolve();
+      this._hop = { t: 0, height, duration, resolve };
+    });
   }
 
   /** Move this character into another World (map change), optionally to a new spot. */
@@ -169,8 +179,20 @@ export class Character {
     if (Math.abs(lx) > Math.abs(lz) * 1.05) dir = lx < 0 ? 'left' : 'right';
     else dir = lz < 0 ? 'up' : 'down';
     this.animator.setDirection(dir);
-    this.animator.play(this.moving ? (this.running ? 'run' : 'walk') : 'idle');
+    const idle = this.talking && this.sheet.animations.talk ? 'talk' : 'idle';
+    this.animator.play(this.moving ? (this.running ? 'run' : 'walk') : idle);
     this.animator.update(dt);
+    if (this._hop) {
+      const h = this._hop;
+      h.t += dt;
+      const k = Math.min(1, h.t / h.duration);
+      this.sprite.position.y = Math.sin(k * Math.PI) * h.height;
+      if (k >= 1) {
+        this.sprite.position.y = 0;
+        this._hop = null;
+        h.resolve();
+      }
+    }
   }
 
   dispose() {

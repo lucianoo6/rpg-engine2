@@ -650,6 +650,11 @@ export class HollowbrookGame {
       this.prompt.hide();
     }
     this.dialogue.update(rawDt, input);
+    // the speaker's mouth moves while their line is being typed out
+    const dl = this.dialogue;
+    const speaking = dl.active && dl._line && dl._shown < dl._full.length ? dl._line.speaker : null;
+    p.talking = !!speaking && speaking === p.name;
+    for (const n of map.npcs) n.char.talking = !!speaking && speaking === n.name;
     this.ui.root.classList.toggle('is-cutscene', this.events.busy);
 
     // ---- camera & global toggles ----
@@ -701,7 +706,7 @@ export class HollowbrookGame {
     this.cycle.update(dt);
     const s = this.cycle.state;
     this.lightPool.focus.copy(p.position);
-    map.update(dt, t, s, { yaw: this.rig.yaw, player: p });
+    map.update(dt, t, s, { yaw: this.rig.yaw, player: p, camera: this.engine.camera });
     this.lightPool.update(dt);
     // shared glowing materials follow the clock
     const night = s.night;

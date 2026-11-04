@@ -19,6 +19,7 @@
  *   walk     who, to, run?, stop?, wait?   path-find to [x,z] | "player" | spawn name | actor name
  *   face     who, to                       turn towards a point or actor
  *   emote    who, icon (! ? ♪ … ♥ z), s?   balloon over a head
+ *   hop      who, height?, s?, wait?        a little jump (surprise, joy)
  *   wait     s                             pause
  *   camera   focus?, distance?, reset?, s? frame an actor / restore the camera
  *   fade     to (0..1), s?                 fade to/from black
@@ -81,6 +82,10 @@ export class EventRunner {
     });
     this.register('emote', async (c, ctx) => {
       const p = g.emote(g.actor(c.who, ctx), c.icon || '!', c.s ?? 1.2);
+      if (c.wait !== false) await p;
+    });
+    this.register('hop', async (c, ctx) => {
+      const p = g.actor(c.who, ctx).hop(c.height ?? 0.32, c.s ?? 0.3);
       if (c.wait !== false) await p;
     });
     this.register('wait', (c) => g.wait(c.s ?? 0.5));

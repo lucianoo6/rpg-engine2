@@ -55,7 +55,7 @@ export function decorateVillage(scene, map, world, { lightParent = scene } = {})
   scene.add(river);
   out.water = [water, river];
   const fallW = POI.waterfall.x1 - POI.waterfall.x0;
-  const waterfall = new Waterfall({ width: fallW, height: 2.72 - map.waterLevel + 0.06 });
+  const waterfall = new Waterfall({ width: fallW, height: 2.72 - map.waterLevel + 0.02 });
   waterfall.position.set(POI.waterfall.x0 + fallW / 2, map.waterLevel, POI.waterfall.z + 0.04);
   scene.add(waterfall);
   out.waterfall = waterfall;
