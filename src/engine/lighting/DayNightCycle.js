@@ -33,6 +33,7 @@ export class DayNightCycle {
     this.keys = keyframes.slice().sort((a, b) => a.t - b.t);
     this.time = time;
     this.speed = speed; // in-game hours per real second
+    this.indoor = null;
     this.listeners = [];
     this.focus = new THREE.Vector3();
     this.shadowHalfSize = 20;
@@ -121,26 +122,48 @@ export class DayNightCycle {
     this.apply();
   }
 
+  /**
+   * Indoor mode: time keeps running (state, night level, listeners) but the
+   * sun is switched off and a fixed interior mood replaces sky, fog and grade.
+   * Pass null to go back outdoors.
+   */
+  setIndoor(env) {
+    if (!env) { this.indoor = null; return; }
+    const C = (v) => new THREE.Color(v);
+    this.indoor = {
+      sky: C(env.sky ?? '#ffd8a8'), ground: C(env.ground ?? '#3a2a20'), hemiI: env.hemiI ?? 0.9,
+      fog: C(env.fog ?? '#0e0b09'), fogNear: env.fogNear ?? 30, fogFar: env.fogFar ?? 70,
+      exposure: env.exposure ?? 1.2, sat: env.sat ?? 1.05, contrast: env.contrast ?? 1.06,
+      tint: C(env.tint ?? '#fff1e0'), bloom: env.bloom ?? 0.7,
+    };
+  }
+
   apply() {
     const s = this.state;
+    const indoor = this.indoor;
+    const env = indoor
+      ? { sky: indoor.sky, ground: indoor.ground, hemiI: indoor.hemiI, fog: indoor.fog, fogNear: indoor.fogNear, fogFar: indoor.fogFar, exposure: indoor.exposure, sat: indoor.sat, contrast: indoor.contrast, tint: indoor.tint, bloom: indoor.bloom, clouds: 0 }
+      : { sky: s.sky, ground: s.ground, hemiI: s.hemiIntensity, fog: s.fog, fogNear: s.fogNear, fogFar: s.fogFar, exposure: s.exposure, sat: s.saturation, contrast: s.contrast, tint: s.tint, bloom: s.bloom, clouds: s.clouds };
     this.sun.color.copy(s.sunColor);
-    this.sun.intensity = s.sunIntensity;
-    this.hemi.color.copy(s.sky);
-    this.hemi.groundColor.copy(s.ground);
-    this.hemi.intensity = s.hemiIntensity;
+    this.sun.intensity = indoor ? 0 : s.sunIntensity;
+    // no sun shadow pass indoors (but render it once so the shader never samples an empty map)
+    this.sun.shadow.autoUpdate = !indoor || !this.sun.shadow.map;
+    this.hemi.color.copy(env.sky);
+    this.hemi.groundColor.copy(env.ground);
+    this.hemi.intensity = env.hemiI;
     if (this.scene.fog) {
-      this.scene.fog.color.copy(s.fog);
-      this.scene.fog.near = s.fogNear;
-      this.scene.fog.far = s.fogFar;
+      this.scene.fog.color.copy(env.fog);
+      this.scene.fog.near = env.fogNear;
+      this.scene.fog.far = env.fogFar;
     }
-    if (this.scene.background && this.scene.background.isColor) this.scene.background.copy(s.fog);
-    globalUniforms.uCloudStrength.value = s.clouds;
+    if (this.scene.background && this.scene.background.isColor) this.scene.background.copy(env.fog);
+    globalUniforms.uCloudStrength.value = env.clouds;
     if (this.post) {
-      this.post.grade.exposure = s.exposure * this.post.grade.exposureBias;
-      this.post.grade.saturation = s.saturation * this.post.grade.saturationBias;
-      this.post.grade.contrast = s.contrast;
-      this.post.grade.tint.copy(s.tint);
-      this.post.bloom.strength = s.bloom * this.post.bloom.strengthBias;
+      this.post.grade.exposure = env.exposure * this.post.grade.exposureBias;
+      this.post.grade.saturation = env.sat * this.post.grade.saturationBias;
+      this.post.grade.contrast = env.contrast;
+      this.post.grade.tint.copy(env.tint);
+      this.post.bloom.strength = env.bloom * this.post.bloom.strengthBias;
     }
     this._placeSun();
     for (const fn of this.listeners) fn(s, this);

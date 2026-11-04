@@ -6,9 +6,10 @@ import { smoothstep } from '../core/Random.js';
  * night level. Exposes `position` / `color` / `intensity` so water can
  * reflect it.
  *
- * Pass a LightPool as `parent` (recommended) and the pool decides which
- * sources get one of its few real PointLights each frame. Pass any
- * Object3D instead and the source owns a dedicated PointLight.
+ * Pass a LightPool as `parent` and the pool decides which sources get one
+ * of its few real PointLights each frame. Pass `null` to create a bare
+ * source (a GameMap registers it with the pool when it becomes active).
+ * Pass any Object3D instead and the source owns a dedicated PointLight.
  */
 export class FlickerLight {
   constructor(parent, position, {
@@ -31,7 +32,9 @@ export class FlickerLight {
     this.current = 0; // with flicker (what a PointLight should emit)
     this.enabled = true;
     this.light = null;
-    if (parent && parent.isLightPool) {
+    if (!parent) {
+      // bare source; someone registers it with a LightPool later
+    } else if (parent.isLightPool) {
       parent.add(this);
     } else {
       this.light = new THREE.PointLight(this.color, 0, distance, decay);

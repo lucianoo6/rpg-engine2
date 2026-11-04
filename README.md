@@ -25,6 +25,7 @@ Then open the URL Vite prints. Other pages:
 - `/` — the Hollowbrook demo
 - `/minimal.html` — the smallest useful scene (about 70 lines, see [`examples/minimal.js`](examples/minimal.js))
 - `/sprites.html` — a gallery of every procedural sprite, character sheet and tile texture
+- `/export.html` — download procedural characters as PNG + Aseprite JSON, and the tileset for Tiled
 
 `npm run build` writes a static site to `dist/`. It uses relative paths, so you can host it anywhere, GitHub Pages included.
 
@@ -110,7 +111,18 @@ src/engine/
   sprites/SpriteInstances.js thousands of static sprites in one draw call
   world/TileMap.js          heights, tile types, solids, bridge decks
   world/TerrainBuilder.js   tile map → merged block meshes with baked AO
-  world/World.js            ground queries, step-limited walkability, colliders, zones
+  world/World.js            ground queries, step-limited walkability, colliders, zones, triggers
+  world/NavGrid.js          A* path finding with string pulling
+  world/TileTypes.js        built-in tile types (outdoor and interior)
+  game/GameMap.js           a loaded level: scene, world, NPCs, lights, effects, spawns, scripts
+  game/MapData.js           native map format + Tiled (.tmj) importer
+  game/MapBuilder.js        map data → GameMap (terrain + prefabs)
+  game/Prefabs.js           object types: npc, spawn, warp, trigger, inspect, light, fire,
+                            furniture, particles, light shafts, sprites…
+  game/Events.js            JSON event scripts for dialogue and cutscenes
+  game/SaveSystem.js        save games and settings in localStorage
+  sprites/SpriteSheet.js    load sprite sheets from PNG grids or Aseprite JSON
+  sprites/Emote.js          "!" "?" "♪" balloons over heads
   world/Water.js            pixel water (shore foam, glints, lamp reflections) and waterfall
   world/Props.js            houses with gable roofs, fences, lamps, well, decks, stall...
   world/StaticBatch.js      merges static props per material
@@ -126,10 +138,13 @@ src/engine/
   audio/Sfx.js              footsteps per surface, dialogue voices, UI, chimes
   camera/CameraRig.js       long-lens follow camera, orbit, zoom, intro fly-in
   entities/Character.js     walking sprite with collision, steps and facing
-  entities/Behaviours.js    Wander and Patrol AI
+  entities/Behaviours.js    Wander and Patrol AI (path-finding aware)
   input/Input.js            keyboard, wheel, touch stick
   ui/UI.js, ui/ui.css       dialogue with choices, banners, prompts, HUD, title card
-src/demo/                   Hollowbrook: map layout, decoration, cast, gameplay
+src/demo/Game.js            Hollowbrook game shell: maps, saves, events, audio, UI
+src/demo/maps/village.js    the village, built in code
+public/maps/inn.tmj         the inn interior, a Tiled map
+public/sprites/             the innkeeper's sheet as PNG + Aseprite JSON
 examples/minimal.js         a minimal scene using the public API
 ```
 
@@ -167,6 +182,37 @@ engine.addSystem((dt) => {
 });
 engine.start();
 ```
+
+## Maps, sprites, events and saves
+
+The game holds what survives a map change (player, camera, audio, UI, story flags, saves) and loads maps on demand. A map can be built in code like the village, or loaded from data like the inn. Both become the same `GameMap`. Maps you leave stay in memory, so NPCs and effects are where you left them when you come back.
+
+### Maps from Tiled
+
+Open `public/maps/inn.tmj` in [Tiled](https://www.mapeditor.org) to see the conventions:
+
+- **`ground` tile layer:** paint with the tiles of `tilesets/hd2d-tiles.tsj`. Each tile's `type` property names a tile type (grass, path, cobble, floor, wall, hearth…; see `TileTypes.js`).
+- **`height` tile layer** (optional): tiles carry a `height` property in world units (steps of 0.5).
+- **Object layers:** an object's class (type) picks a prefab and its custom properties configure it. Rectangles give size; points give position.
+  - `npc`: `sheet` (`cast:<key>` or a file path), `dialogue` (lines separated by `|`) or `script`, `behaviour` (`wander`), `facing`, `voice`
+  - `spawn` (`facing`), `warp` (`map`, `spawn`), `trigger` (`script`, `once`), `inspect` (`label`, `text` or `script`), `zone` (`title`, `subtitle`)
+  - `light`, `fire`, `particles` (`preset`), `shaft`, `sprite` (`sprite`: tree, bush, rock…)
+  - furniture: `table`, `stool`, `counter`, `shelf`, `bed`, `fireplace`, `window`, `rug`, `barrel`, `crate`, `bench`, `lamppost`
+- **Map properties:** `title`, `subtitle`, `indoor`, `cameraDistance`, `cameraPitch`, `cameraBounds` (`minX,minZ,maxX,maxZ`), `edgeDepth`, `scripts` (JSON of named event scripts).
+
+Save tile layers as CSV, and keep tilesets as JSON (`.tsj`) or embedded. Add your own object types with `prefabs.register('type', (obj, ctx) => …)`. There is also a compact native format (`toNative()` / `parseMapData()`).
+
+### Sprites from files
+
+`loadSpriteSheet(url)` accepts an Aseprite JSON export or a PNG in the engine's character grid. Name Aseprite tags `<animation>_<direction>`, for example `idle_down` or `walk_left`. Frame durations set the speed, and forward, reverse and pingpong tags all work. Use `/export.html` to get any procedural character as a starting point you can repaint. The innkeeper in the inn is loaded this way.
+
+### Events and cutscenes
+
+Dialogue and cutscenes are JSON command lists (`say`, `choose`, `walk`, `face`, `emote`, `camera`, `fade`, `time`, `flag`, `if`, `warp`, `sound`, `banner`, `save`, `run`). `walk` uses the path finder, so actors go around furniture and up stairs. The full list is documented at the top of `src/engine/game/Events.js`. The village's opening scene and the inn's welcome are both written this way.
+
+### Saving
+
+Touching the crystal saves, and so does every map change. The title screen then offers **Continue**. Saves keep the map, position, facing, time of day and story flags. Settings (quality, volumes, mute) are stored separately. If browser storage is unavailable, the game runs without saving. `?nosave` ignores saves for testing, `?map=inn&at=7,6` starts anywhere, and the settings panel has **World → go to map / save now / delete save**.
 
 ## Performance and quality
 

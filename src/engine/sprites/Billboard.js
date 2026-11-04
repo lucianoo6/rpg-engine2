@@ -53,11 +53,16 @@ export class Billboard extends THREE.Mesh {
   constructor(texture, o = {}) {
     const [cols, rows] = o.frames || [1, 1];
     const pivot = o.pivot || [0.5, 0];
-    const w = o.width ?? texture.userData.pixelWidth / cols / PPU;
-    const h = o.height ?? texture.userData.pixelHeight / rows / PPU;
+    const texW = texture.userData.pixelWidth ?? texture.image.width;
+    const texH = texture.userData.pixelHeight ?? texture.image.height;
+    // either a uniform grid (`frames`) or arbitrary rects of one size (`frameSize`, e.g. Aseprite atlases)
+    const fw = o.frameSize ? o.frameSize[0] : texW / cols;
+    const fh = o.frameSize ? o.frameSize[1] : texH / rows;
+    const w = o.width ?? fw / PPU;
+    const h = o.height ?? fh / PPU;
     const map = texture.clone();
     map.needsUpdate = true;
-    map.repeat.set(1 / cols, 1 / rows);
+    map.repeat.set(fw / texW, fh / texH);
     const wind = o.wind || 0;
     const material = makeSpriteMaterial(map, { ...o, wind, windHeight: h });
     super(spriteGeometry(w, h, pivot[0], pivot[1], o.tilt ?? 0.55), material);
@@ -68,6 +73,8 @@ export class Billboard extends THREE.Mesh {
     this.receiveShadow = o.receiveShadow ?? true;
     this.cols = cols;
     this.rows = rows;
+    this.texW = texW;
+    this.texH = texH;
     this.spriteWidth = w;
     this.spriteHeight = h;
     this.setFrame(0, 0);
@@ -75,6 +82,13 @@ export class Billboard extends THREE.Mesh {
 
   setFrame(col, row) {
     this.material.map.offset.set(col / this.cols, 1 - (row + 1) / this.rows);
+  }
+
+  /** Show a pixel rect of the texture (x, y from the top-left, like image editors). */
+  setFrameRect(x, y, w, h) {
+    const m = this.material.map;
+    m.repeat.set(w / this.texW, h / this.texH);
+    m.offset.set(x / this.texW, 1 - (y + h) / this.texH);
   }
 }
 
@@ -111,12 +125,18 @@ export class SpriteAnimator {
   update(dt) {
     const anim = this.sheet.animations[this.current];
     this.time += dt * this.speed;
-    const idx = Math.floor(this.time * anim.fps) % anim.frames.length;
+    const frames = (anim.byDir && anim.byDir[this.direction]) || anim.frames;
+    const idx = Math.floor(this.time * anim.fps) % frames.length;
     if (idx !== this._lastIdx) {
       if (this._lastIdx !== -1 && anim.steps && anim.steps.includes(idx) && this.onStep) this.onStep(this.current);
       this._lastIdx = idx;
     }
+    if (this.sheet.frameRects) {
+      const r = this.sheet.frameRects[frames[idx]];
+      this.sprite.setFrameRect(r.x, r.y, r.w, r.h);
+      return;
+    }
     const row = Math.max(0, this.sheet.directions.indexOf(this.direction));
-    this.sprite.setFrame(anim.frames[idx], row);
+    this.sprite.setFrame(frames[idx], row);
   }
 }

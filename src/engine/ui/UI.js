@@ -225,16 +225,48 @@ export class HUD {
 }
 
 export class TitleCard {
-  constructor(ui, { title, subtitle, prompt = 'Press Enter or tap to begin' }) {
+  /** options: menu entries (e.g. ['Continue', 'New Journey']); empty = "press to begin". */
+  constructor(ui, { title, subtitle, prompt = 'Press Enter or tap to begin', options = [] }) {
     this.el = el('div', 'hd-title', ui.root, `
       <div class="hd-title__inner">
         <div class="hd-title__eyebrow">three.js · HD-2D engine</div>
         <div class="hd-title__name">${title}</div>
         <div class="hd-title__rule"><span></span><i></i><span></span></div>
         <div class="hd-title__sub">${subtitle}</div>
-        <div class="hd-title__prompt">${prompt}</div>
+        ${options.length ? '<div class="hd-title__menu"></div>' : `<div class="hd-title__prompt">${prompt}</div>`}
       </div>`);
     this.open = true;
+    this.options = options;
+    this.selected = 0;
+    this.picked = -1;
+    this.onMove = null;
+    const menu = this.el.querySelector('.hd-title__menu');
+    this.items = options.map((o, i) => {
+      const b = el('div', 'hd-title__option', menu, o);
+      b.addEventListener('mouseenter', () => this.select(i));
+      b.addEventListener('click', (e) => { e.stopPropagation(); this.select(i); this.picked = i; });
+      return b;
+    });
+    this.select(0);
+  }
+
+  select(i) {
+    if (!this.items.length) return;
+    if (i !== this.selected && this.onMove) this.onMove(i);
+    this.selected = (i + this.items.length) % this.items.length;
+    this.items.forEach((b, k) => b.classList.toggle('is-selected', k === this.selected));
+  }
+
+  /** Returns the chosen option index (0 when there is no menu) or -1 while waiting. */
+  update(input, clicked = false) {
+    if (!this.open) return -1;
+    if (this.items.length) {
+      if (input.pressed('ArrowDown', 'KeyS')) this.select(this.selected + 1);
+      if (input.pressed('ArrowUp', 'KeyW')) this.select(this.selected - 1);
+    }
+    if (this.picked >= 0) return this.picked;
+    if (input.pressed('Enter', 'Space', 'Tap', 'KeyE') || clicked) return this.items.length ? this.selected : 0;
+    return -1;
   }
 
   dismiss() {

@@ -27,7 +27,10 @@ export class Character {
     this.radius = radius;
     this.root = new THREE.Group();
     this.root.name = name;
-    this.sprite = new Billboard(sheet.texture, { frames: [sheet.cols, sheet.rows] });
+    this.isCharacter = true;
+    this.sprite = new Billboard(sheet.texture, sheet.frameRects
+      ? { frameSize: [sheet.frameW, sheet.frameH] }
+      : { frames: [sheet.cols, sheet.rows] });
     this.sprite.scale.setScalar(scale);
     this.root.add(this.sprite);
     const blob = new THREE.Mesh(
@@ -51,6 +54,67 @@ export class Character {
     this.velocity = new THREE.Vector3();
     this.collider = solid ? world.addCircle(x, z, radius, this) : null;
     this.lockFacing = false;
+    this._path = null;
+  }
+
+  /** Move this character into another World (map change), optionally to a new spot. */
+  setWorld(world, x = this.position.x, z = this.position.z) {
+    this.cancelPath();
+    if (this.collider) this.world.removeCircle(this.collider);
+    this.world = world;
+    this.position.set(x, world.groundAt(x, z), z);
+    this.collider = this.collider ? world.addCircle(x, z, this.radius, this) : null;
+  }
+
+  /**
+   * Walk to (x, z), following a NavGrid path when `nav` is given.
+   * Resolves true on arrival, false when no path exists or the walker
+   * gets stuck. A new walkTo() or cancelPath() resolves the old one false.
+   */
+  walkTo(x, z, { nav = null, run = false, stopDistance = 0.12, speed = 1 } = {}) {
+    this.cancelPath();
+    const pts = nav ? nav.findPath(this.position.x, this.position.z, x, z) : [[x, z]];
+    if (!pts || !pts.length) return Promise.resolve(false);
+    return new Promise((resolve) => {
+      this._path = { pts, i: 0, run, stop: stopDistance, speed, resolve, stuck: 0 };
+    });
+  }
+
+  cancelPath() {
+    if (!this._path) return;
+    const p = this._path;
+    this._path = null;
+    this.intent.set(0, 0);
+    this.running = false;
+    p.resolve(false);
+  }
+
+  get walking() {
+    return !!this._path;
+  }
+
+  _followPath(dt) {
+    const p = this._path;
+    const [tx, tz] = p.pts[p.i];
+    const dx = tx - this.position.x, dz = tz - this.position.z;
+    const d = Math.hypot(dx, dz);
+    const last = p.i === p.pts.length - 1;
+    if (d < (last ? Math.max(0.08, p.stop) : 0.2)) {
+      if (last) {
+        this._path = null;
+        this.intent.set(0, 0);
+        this.running = false;
+        p.resolve(true);
+        return;
+      }
+      p.i++;
+      this._followPath(dt);
+      return;
+    }
+    // slow down for the final approach so we don't overshoot
+    const k = last ? Math.min(1, d / 0.4 + 0.25) : 1;
+    this.intent.set((dx / d) * p.speed * k, (dz / d) * p.speed * k);
+    this.running = p.run;
   }
 
   faceToward(x, z) {
@@ -74,6 +138,7 @@ export class Character {
   }
 
   update(dt, camYaw = 0) {
+    if (this._path && dt > 0) this._followPath(dt);
     const len = this.intent.length();
     const sp = (this.running ? this.runSpeed : this.speed) * Math.min(1, len);
     let moved = 0;
@@ -85,6 +150,11 @@ export class Character {
       moved = this._move(dx, dz);
     }
     this.moving = moved > 1e-4;
+    if (this._path && dt > 0) {
+      const p = this._path;
+      p.stuck = this.moving ? 0 : p.stuck + dt;
+      if (p.stuck > 0.8) this.cancelPath(); // blocked (e.g. by another character)
+    }
     this.velocity.set((this.position.x - px) / Math.max(dt, 1e-4), 0, (this.position.z - pz) / Math.max(dt, 1e-4));
     if (this.collider) { this.collider.x = this.position.x; this.collider.z = this.position.z; }
 

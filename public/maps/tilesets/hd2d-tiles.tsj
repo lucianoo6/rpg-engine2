@@ -1,0 +1,306 @@
+{
+ "columns": 8,
+ "image": "hd2d-tiles.png",
+ "imagewidth": 128,
+ "imageheight": 64,
+ "margin": 0,
+ "name": "hd2d",
+ "spacing": 0,
+ "tilecount": 29,
+ "tilewidth": 16,
+ "tileheight": 16,
+ "tiles": [
+  {
+   "id": 0,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "grass"
+    }
+   ]
+  },
+  {
+   "id": 1,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "meadow"
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "forest"
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "plateau"
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "highland"
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "path"
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "cobble"
+    }
+   ]
+  },
+  {
+   "id": 7,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "sand"
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "lakebed"
+    }
+   ]
+  },
+  {
+   "id": 9,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "slab"
+    }
+   ]
+  },
+  {
+   "id": 10,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "farm"
+    }
+   ]
+  },
+  {
+   "id": 11,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "floor"
+    }
+   ]
+  },
+  {
+   "id": 12,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "wall"
+    }
+   ]
+  },
+  {
+   "id": 13,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "stonewall"
+    }
+   ]
+  },
+  {
+   "id": 14,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "hearth"
+    }
+   ]
+  },
+  {
+   "id": 15,
+   "properties": [
+    {
+     "name": "type",
+     "type": "string",
+     "value": "void"
+    }
+   ]
+  },
+  {
+   "id": 16,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 0
+    }
+   ]
+  },
+  {
+   "id": 17,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 0.5
+    }
+   ]
+  },
+  {
+   "id": 18,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "id": 19,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 1.5
+    }
+   ]
+  },
+  {
+   "id": 20,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 2
+    }
+   ]
+  },
+  {
+   "id": 21,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 2.5
+    }
+   ]
+  },
+  {
+   "id": 22,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 3
+    }
+   ]
+  },
+  {
+   "id": 23,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 3.5
+    }
+   ]
+  },
+  {
+   "id": 24,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 4
+    }
+   ]
+  },
+  {
+   "id": 25,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 4.5
+    }
+   ]
+  },
+  {
+   "id": 26,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 5
+    }
+   ]
+  },
+  {
+   "id": 27,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 5.5
+    }
+   ]
+  },
+  {
+   "id": 28,
+   "properties": [
+    {
+     "name": "height",
+     "type": "float",
+     "value": 6
+    }
+   ]
+  }
+ ],
+ "type": "tileset",
+ "version": "1.10"
+}

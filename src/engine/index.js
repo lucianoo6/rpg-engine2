@@ -36,6 +36,17 @@ export { Ambience } from './audio/Ambience.js';
 export { Sfx } from './audio/Sfx.js';
 export * as Synth from './audio/Synth.js';
 
+export { GameMap } from './game/GameMap.js';
+export { parseMapData, parseTiled, loadMapData, toNative } from './game/MapData.js';
+export { buildMap } from './game/MapBuilder.js';
+export { PrefabRegistry, defaultPrefabs } from './game/Prefabs.js';
+export { EventRunner, parseScript } from './game/Events.js';
+export { SaveSystem } from './game/SaveSystem.js';
+export { NavGrid } from './world/NavGrid.js';
+export { DEFAULT_TILE_TYPES, tileTypes } from './world/TileTypes.js';
+export { loadSpriteSheet, sheetFromAseprite, sheetFromGrid, gridSheetToAseprite } from './sprites/SpriteSheet.js';
+export { Emote } from './sprites/Emote.js';
+
 export { Character } from './entities/Character.js';
 export { Wander, Patrol } from './entities/Behaviours.js';
 export { UIRoot, DialogueBox, Banner, WorldPrompt, HUD, TitleCard } from './ui/UI.js';

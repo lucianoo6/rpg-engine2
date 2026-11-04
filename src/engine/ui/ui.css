@@ -315,6 +315,30 @@ html, body {
   animation: hd-pulse 2.2s ease-in-out infinite;
 }
 @keyframes hd-pulse { 50% { opacity: 0.35; } }
+.hd-title__menu { margin-top: 36px; display: inline-flex; flex-direction: column; gap: 4px; }
+.hd-title__option {
+  position: relative;
+  padding: 6px 30px;
+  font-family: var(--hd-display);
+  font-size: 15px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--hd-ink-dim);
+  cursor: pointer;
+}
+.hd-title__option.is-selected { color: #fff6de; }
+.hd-title__option.is-selected::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 50%;
+  width: 7px; height: 7px;
+  margin-top: -4px;
+  background: var(--hd-gold);
+  transform: rotate(45deg);
+}
+
+/* ---------- cutscenes ---------- */
+.hd-ui.is-cutscene .hd-help { opacity: 0; }
 
 /* ---------- touch stick ---------- */
 .hd-stick {

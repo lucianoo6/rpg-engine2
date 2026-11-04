@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Asset Export</title>
+  <style>
+    body { margin: 0; padding: 24px; background: #2a2f3f; color: #eee; font: 14px system-ui, sans-serif; }
+    h1 { font-size: 20px; } h2 { font-size: 16px; margin-top: 28px; }
+    p { color: #bbb; max-width: 720px; line-height: 1.5; }
+    .row { display: flex; flex-wrap: wrap; gap: 18px; }
+    figure { margin: 0; padding: 10px; background: #343a4d; border-radius: 6px; }
+    canvas { image-rendering: pixelated; display: block; background: #7f9a6a; }
+    a { color: #f0d898; margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Asset export</h1>
+  <p>Download the procedural sprites as a PNG plus an Aseprite-style JSON (frame rects and <code>idle_down</code> / <code>walk_left</code> … tags), repaint them in any pixel editor, and load them back with <code>loadSpriteSheet()</code>. The tileset is for painting maps in Tiled: each tile carries the <code>type</code> or <code>height</code> property the importer reads.</p>
+  <h2>Characters</h2>
+  <div class="row" id="chars"></div>
+  <h2>Tiled tileset</h2>
+  <div class="row" id="tiles"></div>
+  <script type="module" src="/tools/export.js"></script>
+</body>
+</html>

@@ -6,6 +6,6 @@ export default defineConfig({
   build: {
     target: 'es2022',
     chunkSizeWarningLimit: 1200,
-    rollupOptions: { input: { main: 'index.html', sprites: 'sprites.html', minimal: 'minimal.html' } },
+    rollupOptions: { input: { main: 'index.html', sprites: 'sprites.html', minimal: 'minimal.html', export: 'export.html' } },
   },
 });

@@ -1,5 +1,6 @@
 import { TileMap } from '../engine/world/TileMap.js';
 import { valueNoise } from '../engine/core/Random.js';
+import { tileTypes } from '../engine/world/TileTypes.js';
 
 /**
  * Layout of "Hollowbrook", the demo village, authored in code:
@@ -8,19 +9,7 @@ import { valueNoise } from '../engine/core/Random.js';
  * a farm to the south-west. All heights are multiples of 0.5.
  */
 
-export const TILE_TYPES = [
-  { name: 'grass', top: 'grass', side: 'earthSide' },
-  { name: 'meadow', top: 'meadow', side: 'meadowSide' },
-  { name: 'forest', top: 'forest', side: 'forestSide' },
-  { name: 'plateau', top: 'grass', side: 'cliff' },
-  { name: 'highland', top: 'forest', side: 'cliff' },
-  { name: 'path', top: 'dirt', side: 'dirtSide' },
-  { name: 'cobble', top: 'cobble', side: 'brick' },
-  { name: 'sand', top: 'sand', side: 'sandSide' },
-  { name: 'lakebed', top: 'lakebed', side: 'sandSide' },
-  { name: 'slab', top: 'slab', side: 'brick' },
-  { name: 'farm', top: 'farmland', side: 'dirtSide' },
-];
+export const TILE_TYPES = tileTypes();
 
 export const W = 56;
 export const D = 46;

@@ -45,6 +45,18 @@ export class LightPool {
     return source;
   }
 
+  remove(source) {
+    const i = this.sources.indexOf(source);
+    if (i >= 0) this.sources.splice(i, 1);
+    if (this.shadowOwner === source) this.shadowOwner = null;
+    if (this._lastShadowSrc === source) this._lastShadowSrc = null;
+  }
+
+  /** Start fresh weights next update (e.g. after a map change). */
+  snap() {
+    this._snap = true;
+  }
+
   /** Change the number of pooled lights (recompiles lit shaders once). */
   setSize(n) {
     while (this.slots.length < n) {
@@ -131,6 +143,7 @@ export class LightPool {
       L.intensity = 0;
       L.shadow.autoUpdate = false;
     }
+    if (!L.shadow.map) L.shadow.needsUpdate = true; // never sample an unrendered shadow map
     if (owner) this.shadowOwner = owner;
     else if (this.shadowOwner && this.shadowOwner.shadowWeight < 0.01) this.shadowOwner = null;
   }

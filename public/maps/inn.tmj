@@ -1,0 +1,1211 @@
+{
+ "compressionlevel": -1,
+ "width": 14,
+ "height": 11,
+ "infinite": false,
+ "layers": [
+  {
+   "id": 1,
+   "name": "ground",
+   "type": "tilelayer",
+   "width": 14,
+   "height": 11,
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "data": [
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    12,
+    15,
+    15,
+    15,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    13,
+    13,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    13,
+    13,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    13,
+    13,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    13,
+    13,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    13,
+    13,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    13,
+    13,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    13,
+    13,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    13,
+    13,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    12,
+    12,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13
+   ]
+  },
+  {
+   "id": 2,
+   "name": "height",
+   "type": "tilelayer",
+   "width": 14,
+   "height": 11,
+   "x": 0,
+   "y": 0,
+   "opacity": 0.6,
+   "visible": true,
+   "data": [
+    24,
+    24,
+    24,
+    24,
+    24,
+    24,
+    24,
+    24,
+    24,
+    24,
+    24,
+    24,
+    24,
+    24,
+    24,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    18,
+    18,
+    18,
+    18,
+    24,
+    24,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    18,
+    18,
+    18,
+    18,
+    24,
+    24,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    18,
+    18,
+    18,
+    18,
+    24,
+    24,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    18,
+    18,
+    18,
+    18,
+    24,
+    24,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    24,
+    24,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    24,
+    24,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    24,
+    24,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    24,
+    24,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    24,
+    24,
+    18,
+    18,
+    18,
+    18,
+    18,
+    0,
+    0,
+    18,
+    18,
+    18,
+    18,
+    18,
+    24
+   ]
+  },
+  {
+   "id": 3,
+   "name": "objects",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "objects": [
+    {
+     "id": 1,
+     "name": "entrance",
+     "type": "spawn",
+     "rotation": 0,
+     "visible": true,
+     "x": 112.0,
+     "y": 147.2,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": "exit",
+     "type": "warp",
+     "rotation": 0,
+     "visible": true,
+     "x": 96.0,
+     "y": 168.0,
+     "width": 32,
+     "height": 8.0,
+     "properties": [
+      {
+       "name": "map",
+       "type": "string",
+       "value": "village"
+      },
+      {
+       "name": "spawn",
+       "type": "string",
+       "value": "innDoor"
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "name": "welcome",
+     "type": "trigger",
+     "rotation": 0,
+     "visible": true,
+     "x": 88.0,
+     "y": 124.8,
+     "width": 48,
+     "height": 25.6,
+     "properties": [
+      {
+       "name": "script",
+       "type": "string",
+       "value": "@welcome"
+      },
+      {
+       "name": "once",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 4,
+     "name": "Marta",
+     "type": "npc",
+     "rotation": 0,
+     "visible": true,
+     "x": 104.0,
+     "y": 28.0,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "sheet",
+       "type": "string",
+       "value": "sprites/innkeeper.json"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "down"
+      },
+      {
+       "name": "voice",
+       "type": "float",
+       "value": 1.2
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"do\": \"if\", \"flag\": \"rentedRoom\", \"then\": [{\"do\": \"say\", \"who\": \"self\", \"text\": \"Sleep well? The pillows are stuffed with real goose down. Well. Mostly real.\"}], \"else\": [{\"do\": \"say\", \"who\": \"self\", \"text\": \"Hungry? The stew has been on since dawn.\"}, {\"do\": \"run\", \"script\": \"room\"}]}]"
+      }
+     ]
+    },
+    {
+     "id": 5,
+     "name": "Rook",
+     "type": "npc",
+     "rotation": 0,
+     "visible": true,
+     "x": 54.4,
+     "y": 118.4,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "sheet",
+       "type": "string",
+       "value": "cast:traveler"
+      },
+      {
+       "name": "behaviour",
+       "type": "string",
+       "value": "wander"
+      },
+      {
+       "name": "wanderRadius",
+       "type": "float",
+       "value": 1.0
+      },
+      {
+       "name": "walkSpeed",
+       "type": "float",
+       "value": 0.4
+      },
+      {
+       "name": "voice",
+       "type": "float",
+       "value": 0.85
+      },
+      {
+       "name": "dialogue",
+       "type": "string",
+       "value": "Card game? No? Smart.|They say the crystal in the square remembers every face. Mine it pretends not to."
+      }
+     ]
+    },
+    {
+     "id": 6,
+     "name": "bar",
+     "type": "counter",
+     "rotation": 0,
+     "visible": true,
+     "x": 73.6,
+     "y": 36.8,
+     "width": 60.8,
+     "height": 11.2,
+     "properties": [
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "down"
+      }
+     ]
+    },
+    {
+     "id": 7,
+     "name": "",
+     "type": "shelf",
+     "rotation": 0,
+     "visible": true,
+     "x": 84.8,
+     "y": 20.0,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "down"
+      }
+     ]
+    },
+    {
+     "id": 8,
+     "name": "",
+     "type": "shelf",
+     "rotation": 0,
+     "visible": true,
+     "x": 123.2,
+     "y": 20.0,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "down"
+      }
+     ]
+    },
+    {
+     "id": 9,
+     "name": "jars",
+     "type": "inspect",
+     "rotation": 0,
+     "visible": true,
+     "x": 104.0,
+     "y": 20.8,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "label",
+       "type": "string",
+       "value": "Look"
+      },
+      {
+       "name": "text",
+       "type": "string",
+       "value": "Rows of jars: pickled plums, wild honey, and one labelled simply DO NOT."
+      },
+      {
+       "name": "range",
+       "type": "float",
+       "value": 1.8
+      }
+     ]
+    },
+    {
+     "id": 10,
+     "name": "hearth",
+     "type": "fireplace",
+     "rotation": 0,
+     "visible": true,
+     "x": 48.0,
+     "y": 23.2,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "down"
+      }
+     ]
+    },
+    {
+     "id": 11,
+     "name": "",
+     "type": "table",
+     "rotation": 0,
+     "visible": true,
+     "x": 38.4,
+     "y": 94.4,
+     "width": 25.6,
+     "height": 16.0
+    },
+    {
+     "id": 12,
+     "name": "",
+     "type": "stool",
+     "rotation": 0,
+     "visible": true,
+     "x": 32.0,
+     "y": 102.4,
+     "width": 0,
+     "height": 0,
+     "point": true
+    },
+    {
+     "id": 13,
+     "name": "",
+     "type": "stool",
+     "rotation": 0,
+     "visible": true,
+     "x": 70.4,
+     "y": 102.4,
+     "width": 0,
+     "height": 0,
+     "point": true
+    },
+    {
+     "id": 14,
+     "name": "",
+     "type": "stool",
+     "rotation": 0,
+     "visible": true,
+     "x": 51.2,
+     "y": 88.0,
+     "width": 0,
+     "height": 0,
+     "point": true
+    },
+    {
+     "id": 15,
+     "name": "",
+     "type": "table",
+     "rotation": 0,
+     "visible": true,
+     "x": 147.2,
+     "y": 110.4,
+     "width": 25.6,
+     "height": 16.0
+    },
+    {
+     "id": 16,
+     "name": "",
+     "type": "stool",
+     "rotation": 0,
+     "visible": true,
+     "x": 140.8,
+     "y": 118.4,
+     "width": 0,
+     "height": 0,
+     "point": true
+    },
+    {
+     "id": 17,
+     "name": "",
+     "type": "stool",
+     "rotation": 0,
+     "visible": true,
+     "x": 179.2,
+     "y": 118.4,
+     "width": 0,
+     "height": 0,
+     "point": true
+    },
+    {
+     "id": 18,
+     "name": "",
+     "type": "stool",
+     "rotation": 0,
+     "visible": true,
+     "x": 160.0,
+     "y": 132.8,
+     "width": 0,
+     "height": 0,
+     "point": true
+    },
+    {
+     "id": 19,
+     "name": "bed",
+     "type": "bed",
+     "rotation": 0,
+     "visible": true,
+     "x": 190.4,
+     "y": 35.2,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "down"
+      }
+     ]
+    },
+    {
+     "id": 20,
+     "name": "",
+     "type": "table",
+     "rotation": 0,
+     "visible": true,
+     "x": 149.6,
+     "y": 23.2,
+     "width": 14.4,
+     "height": 14.4
+    },
+    {
+     "id": 21,
+     "name": "bedInspect",
+     "type": "inspect",
+     "rotation": 0,
+     "visible": true,
+     "x": 190.4,
+     "y": 54.4,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "label",
+       "type": "string",
+       "value": "Rest"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"do\":\"run\",\"script\":\"room\"}]"
+      },
+      {
+       "name": "range",
+       "type": "float",
+       "value": 1.6
+      }
+     ]
+    },
+    {
+     "id": 22,
+     "name": "",
+     "type": "barrel",
+     "rotation": 0,
+     "visible": true,
+     "x": 25.6,
+     "y": 140.8,
+     "width": 0,
+     "height": 0,
+     "point": true
+    },
+    {
+     "id": 23,
+     "name": "",
+     "type": "barrel",
+     "rotation": 0,
+     "visible": true,
+     "x": 40.0,
+     "y": 147.2,
+     "width": 0,
+     "height": 0,
+     "point": true
+    },
+    {
+     "id": 24,
+     "name": "",
+     "type": "crate",
+     "rotation": 0,
+     "visible": true,
+     "x": 195.2,
+     "y": 144.0,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "size",
+       "type": "float",
+       "value": 0.7
+      }
+     ]
+    },
+    {
+     "id": 25,
+     "name": "",
+     "type": "crate",
+     "rotation": 0,
+     "visible": true,
+     "x": 184.0,
+     "y": 148.8,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "size",
+       "type": "float",
+       "value": 0.55
+      }
+     ]
+    },
+    {
+     "id": 26,
+     "name": "",
+     "type": "rug",
+     "rotation": 0,
+     "visible": true,
+     "x": 86.4,
+     "y": 81.6,
+     "width": 51.2,
+     "height": 35.2
+    },
+    {
+     "id": 27,
+     "name": "",
+     "type": "rug",
+     "rotation": 0,
+     "visible": true,
+     "x": 99.2,
+     "y": 143.2,
+     "width": 25.6,
+     "height": 14.4,
+     "properties": [
+      {
+       "name": "texture",
+       "type": "string",
+       "value": "rugBlue"
+      }
+     ]
+    },
+    {
+     "id": 28,
+     "name": "",
+     "type": "window",
+     "rotation": 0,
+     "visible": true,
+     "x": 160.0,
+     "y": 16.64,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "y",
+       "type": "float",
+       "value": 2.3
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "down"
+      }
+     ]
+    },
+    {
+     "id": 29,
+     "name": "",
+     "type": "window",
+     "rotation": 0,
+     "visible": true,
+     "x": 190.4,
+     "y": 16.64,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "y",
+       "type": "float",
+       "value": 2.3
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "down"
+      }
+     ]
+    },
+    {
+     "id": 30,
+     "name": "",
+     "type": "shaft",
+     "rotation": 0,
+     "visible": true,
+     "x": 163.2,
+     "y": 25.6,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "length",
+       "type": "float",
+       "value": 4.2
+      },
+      {
+       "name": "width",
+       "type": "float",
+       "value": 1.1
+      },
+      {
+       "name": "lean",
+       "type": "float",
+       "value": -0.42
+      },
+      {
+       "name": "intensity",
+       "type": "float",
+       "value": 0.24
+      },
+      {
+       "name": "y",
+       "type": "float",
+       "value": 0.5
+      }
+     ]
+    },
+    {
+     "id": 31,
+     "name": "",
+     "type": "shaft",
+     "rotation": 0,
+     "visible": true,
+     "x": 193.6,
+     "y": 25.6,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "length",
+       "type": "float",
+       "value": 4.2
+      },
+      {
+       "name": "width",
+       "type": "float",
+       "value": 1.1
+      },
+      {
+       "name": "lean",
+       "type": "float",
+       "value": -0.42
+      },
+      {
+       "name": "intensity",
+       "type": "float",
+       "value": 0.24
+      },
+      {
+       "name": "y",
+       "type": "float",
+       "value": 0.5
+      }
+     ]
+    },
+    {
+     "id": 32,
+     "name": "",
+     "type": "particles",
+     "rotation": 0,
+     "visible": true,
+     "x": 148.8,
+     "y": 28.0,
+     "width": 48,
+     "height": 40.0,
+     "properties": [
+      {
+       "name": "preset",
+       "type": "string",
+       "value": "dust"
+      },
+      {
+       "name": "height",
+       "type": "float",
+       "value": 2.5
+      }
+     ]
+    },
+    {
+     "id": 33,
+     "name": "barLamp",
+     "type": "light",
+     "rotation": 0,
+     "visible": true,
+     "x": 104.0,
+     "y": 51.2,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "y",
+       "type": "float",
+       "value": 2.6
+      },
+      {
+       "name": "color",
+       "type": "string",
+       "value": "#ffbe6a"
+      },
+      {
+       "name": "intensity",
+       "type": "float",
+       "value": 6
+      },
+      {
+       "name": "distance",
+       "type": "float",
+       "value": 8
+      }
+     ]
+    },
+    {
+     "id": 34,
+     "name": "eastLamp",
+     "type": "light",
+     "rotation": 0,
+     "visible": true,
+     "x": 196.8,
+     "y": 104.0,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "y",
+       "type": "float",
+       "value": 2.3
+      },
+      {
+       "name": "color",
+       "type": "string",
+       "value": "#ffb35c"
+      },
+      {
+       "name": "intensity",
+       "type": "float",
+       "value": 5
+      },
+      {
+       "name": "distance",
+       "type": "float",
+       "value": 7
+      }
+     ]
+    },
+    {
+     "id": 35,
+     "name": "westLamp",
+     "type": "light",
+     "rotation": 0,
+     "visible": true,
+     "x": 14.4,
+     "y": 104.0,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "y",
+       "type": "float",
+       "value": 2.3
+      },
+      {
+       "name": "color",
+       "type": "string",
+       "value": "#ffb35c"
+      },
+      {
+       "name": "intensity",
+       "type": "float",
+       "value": 5
+      },
+      {
+       "name": "distance",
+       "type": "float",
+       "value": 7
+      }
+     ]
+    },
+    {
+     "id": 36,
+     "name": "",
+     "type": "sprite",
+     "rotation": 0,
+     "visible": true,
+     "x": 196.8,
+     "y": 83.2,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "bush"
+      },
+      {
+       "name": "seed",
+       "type": "float",
+       "value": 3
+      },
+      {
+       "name": "scale",
+       "type": "float",
+       "value": 0.7
+      }
+     ]
+    },
+    {
+     "id": 37,
+     "name": "",
+     "type": "sprite",
+     "rotation": 0,
+     "visible": true,
+     "x": 24.0,
+     "y": 54.4,
+     "width": 0,
+     "height": 0,
+     "point": true,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "flowerbush"
+      },
+      {
+       "name": "seed",
+       "type": "float",
+       "value": 5
+      },
+      {
+       "name": "scale",
+       "type": "float",
+       "value": 0.7
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "nextlayerid": 4,
+ "nextobjectid": 38,
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "tiledversion": "1.11.0",
+ "tilewidth": 16,
+ "tileheight": 16,
+ "type": "map",
+ "version": "1.10",
+ "properties": [
+  {
+   "name": "title",
+   "type": "string",
+   "value": "The Sleeping Fox"
+  },
+  {
+   "name": "subtitle",
+   "type": "string",
+   "value": "Hollowbrook's only inn"
+  },
+  {
+   "name": "indoor",
+   "type": "bool",
+   "value": true
+  },
+  {
+   "name": "cameraDistance",
+   "type": "float",
+   "value": 15
+  },
+  {
+   "name": "cameraPitch",
+   "type": "float",
+   "value": 40
+  },
+  {
+   "name": "cameraBounds",
+   "type": "string",
+   "value": "5,3.6,9,6.2"
+  },
+  {
+   "name": "edgeDepth",
+   "type": "float",
+   "value": 0
+  },
+  {
+   "name": "scripts",
+   "type": "string",
+   "value": "{\"room\": [{\"do\": \"choose\", \"who\": \"Marta\", \"text\": \"A room for the night? Ten coppers, breakfast included.\", \"options\": [\"Yes, please\", \"Maybe later\"], \"then\": [[{\"do\": \"flag\", \"set\": \"rentedRoom\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"The bed by the window is yours. I'll wake you with the bread.\"}, {\"do\": \"fade\", \"to\": 1, \"s\": 0.8}, {\"do\": \"time\", \"hour\": 7.5, \"s\": 2.5}, {\"do\": \"fade\", \"to\": 0, \"s\": 0.8}, {\"do\": \"banner\", \"title\": \"Morning\", \"subtitle\": \"The smell of fresh bread drifts up from the kitchen\"}, {\"do\": \"save\"}], [{\"do\": \"say\", \"who\": \"Marta\", \"text\": \"The fire's warm whenever you change your mind.\"}]]}], \"welcome\": [{\"do\": \"emote\", \"who\": \"Marta\", \"icon\": \"!\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"Oh! A customer!\"}, {\"do\": \"walk\", \"who\": \"Marta\", \"to\": \"player\"}, {\"do\": \"face\", \"who\": \"player\", \"to\": \"Marta\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"Welcome to the Sleeping Fox. Mind the step, and mind Rook over there. He cheats at cards.\"}, {\"do\": \"emote\", \"who\": \"Rook\", \"icon\": \"♪\", \"wait\": false}, {\"do\": \"run\", \"script\": \"room\"}, {\"do\": \"walk\", \"who\": \"Marta\", \"to\": [6.5, 1.75]}, {\"do\": \"face\", \"who\": \"Marta\", \"to\": [6.5, 6]}]}"
+  }
+ ],
+ "tilesets": [
+  {
+   "firstgid": 1,
+   "source": "tilesets/hd2d-tiles.tsj"
+  }
+ ]
+}

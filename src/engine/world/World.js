@@ -1,6 +1,7 @@
 /**
  * Gameplay-side view of the level: ground height queries, walkability with
- * step limits, circle/box colliders for props, and interactables.
+ * step limits, circle/box colliders for props, interactables, named zones
+ * and triggers (areas that run something when the player walks in).
  */
 export class World {
   constructor(map) {
@@ -9,6 +10,7 @@ export class World {
     this.boxes = [];
     this.interactables = [];
     this.zones = [];
+    this.triggers = [];
     this.maxStep = 0.55;
   }
 
@@ -16,6 +18,21 @@ export class World {
     const c = { x, z, r, tag };
     this.circles.push(c);
     return c;
+  }
+
+  removeCircle(c) {
+    const i = this.circles.indexOf(c);
+    if (i >= 0) this.circles.splice(i, 1);
+  }
+
+  /**
+   * A rectangular trigger. `fire(trigger)` runs when the player enters it
+   * (or is inside when the game becomes idle). `once` triggers fire only once.
+   */
+  addTrigger(minX, minZ, maxX, maxZ, fire, { once = false, name = '' } = {}) {
+    const t = { minX, minZ, maxX, maxZ, fire, once, name, fired: false, inside: false };
+    this.triggers.push(t);
+    return t;
   }
 
   addBox(minX, minZ, maxX, maxZ, tag = null) {
@@ -63,11 +80,12 @@ export class World {
   }
 
   /** Can a circle of radius r stand at (x, z), arriving from height fromY? */
-  canStand(x, z, r, fromY, ignore = null) {
+  canStand(x, z, r, fromY, ignore = null, staticOnly = false) {
     const pts = [[x, z], [x - r, z - r], [x + r, z - r], [x - r, z + r], [x + r, z + r], [x - r, z], [x + r, z], [x, z - r], [x, z + r]];
     for (const [px, pz] of pts) if (this.isBlockedPoint(px, pz, fromY)) return false;
     for (const c of this.circles) {
       if (c === ignore) continue;
+      if (staticOnly && c.tag && c.tag.isCharacter) continue;
       const dx = x - c.x, dz = z - c.z;
       const rr = r + c.r;
       if (dx * dx + dz * dz < rr * rr) return false;

@@ -451,6 +451,44 @@ export function paintStripes({ a = '#c8463b', b = '#f1e6cf', w = 16, h = 16, str
   return pc;
 }
 
+/** Interior wall, 4 units tall: beam cap, plaster, a rail and wood wainscot at the bottom. */
+export function paintInteriorWall({ plaster = '#e4d3b2', wood = '#7a4f30', seed = 40 } = {}) {
+  const pc = paintPlaster({ base: plaster, seed, w: 64, h: 64 });
+  const b = ramp('#5a3a24', 4, 0.07);
+  const pl = paintPlanks({ base: wood, seed: seed + 1, w: 64, h: 20, plank: 6, vertical: true });
+  for (let y = 0; y < 20; y++) for (let x = 0; x < 64; x++) { const p = pl.get(x, y); pc.set(x, 44 + y, [p[0], p[1], p[2]]); }
+  for (let x = 0; x < 64; x++) {
+    for (const [y, k] of [[0, 3], [1, 2], [2, 1], [3, 0], [40, 3], [41, 2], [42, 1], [43, 0]]) pc.set(x, y, b[k]);
+  }
+  // a little grime where wall meets wainscot
+  for (let x = 0; x < 64; x++) pc.set(x, 39, ramp(plaster, 3, 0.06)[0]);
+  return pc;
+}
+
+export function paintRug({ a = '#8f3a3a', b = '#d9b45a', c = '#2f4f6f', w = 48, h = 32 } = {}) {
+  const pc = new PixelCanvas(w, h);
+  const ra = ramp(a, 3, 0.06), rb = ramp(b, 3, 0.06), rc = ramp(c, 3, 0.06);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const ex = Math.min(x, w - 1 - x), ey = Math.min(y, h - 1 - y);
+      const e = Math.min(ex, ey);
+      let col;
+      if (e < 2) col = rb[e === 0 ? 0 : 1];
+      else if (e < 4) col = ra[0];
+      else if (e === 4) col = rb[2];
+      else {
+        const cx = x - w / 2 + 0.5, cy = y - h / 2 + 0.5;
+        const dmd = Math.abs(cx) / (w / 2 - 6) + Math.abs(cy) / (h / 2 - 6);
+        col = dmd < 0.35 ? rb[1] : dmd < 0.55 ? rc[1] : (x + y) % 6 === 0 ? ra[2] : ra[1];
+      }
+      pc.set(x, y, col);
+    }
+  }
+  // fringe
+  for (let y = 1; y < h - 1; y += 2) { pc.clear(0, y); pc.clear(w - 1, y); }
+  return pc;
+}
+
 export function paintFlat(color, size = 4) {
   return new PixelCanvas(size, size).fill(hex(color));
 }
@@ -514,6 +552,12 @@ export const Textures = {
   awning: () => getTexture('awning', () => paintStripes()),
   awningBlue: () => getTexture('awningBlue', () => paintStripes({ a: '#3f6fa8' })),
   iron: () => getTexture('iron', () => paintStone({ base: '#4c4d55', seed: 33, size: 8 })),
+  floorboards: () => getTexture('floorboards', () => paintPlanks({ base: '#9a6a42', seed: 41, w: 64, h: 64, plank: 8, vertical: false })),
+  interiorWall: () => getTexture('interiorWall', () => paintInteriorWall(), { clampV: true }),
+  rug: () => getTexture('rug', () => paintRug(), { repeat: false }),
+  rugBlue: () => getTexture('rugBlue', () => paintRug({ a: '#33557a', b: '#e2c27a', c: '#8f3a3a' }), { repeat: false }),
+  linen: () => getTexture('linen', () => paintPlaster({ base: '#efe7d6', seed: 42, w: 16, h: 16 })),
+  blanket: () => getTexture('blanket', () => paintStripes({ a: '#6f8f4a', b: '#e9dcc0', w: 16, h: 16, stripe: 4 })),
 };
 
 export { mix };

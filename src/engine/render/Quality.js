@@ -47,6 +47,16 @@ export class Quality {
     this.listeners.push(fn);
   }
 
+  /** Point the preset at a different map's ground cover and emitters. */
+  setTargets({ groundCover = [], emitters = [] } = {}) {
+    this.groundCover = groundCover;
+    this.emitters = emitters;
+    const p = this.preset;
+    if (!p) return;
+    for (const g of groundCover) g.setDensity(p.foliage);
+    for (const em of emitters) em.rateScale = p.particles;
+  }
+
   /** Apply a preset by name; `auto` keeps the governor running from there. */
   set(level, { auto = this.auto } = {}) {
     this.auto = auto;

@@ -26,6 +26,16 @@ export const CAST = {
     name: 'Fenna',
     look: { skin: '#e4ad86', hair: '#4a3020', hairStyle: 'braid', tunic: '#3f6aa0', trim: '#f2e6c8', pants: '#5b4a36', boots: '#3d2b20', hat: { type: 'straw', color: '#d9b35c', trim: '#b84a3a' } },
   },
+  traveler: {
+    name: 'Rook',
+    look: { skin: '#d6a07c', hair: '#2b2622', hairStyle: 'short', tunic: '#6b5a44', trim: '#b8a47a', pants: '#3f3a34', boots: '#2b2420', cape: '#4a5a3a', hat: { type: 'bandana', color: '#7a3030' } },
+  },
+  // Only used by tools/export to produce public/sprites/innkeeper.png + .json,
+  // which the inn then loads from file like any hand-made sprite sheet.
+  innkeeper: {
+    name: 'Marta',
+    look: { skin: '#e9b892', hair: '#5a2e22', hairStyle: 'bun', tunic: '#7a3f4f', trim: '#e2b94f', robe: true, apron: '#efe6d4', boots: '#3a2420' },
+  },
   pilgrim: {
     name: 'Sister Ilse',
     look: { skin: '#f1c7a5', hair: '#2a2420', hairStyle: 'short', tunic: '#3f6b55', trim: '#d9c48a', robe: true, hat: { type: 'hood', color: '#2f5444' }, boots: '#2f2a26' },

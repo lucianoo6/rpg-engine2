@@ -16,6 +16,7 @@ export class Ambience {
     this.day = 1;
     this.night = 0;
     this.windBase = 0.05;
+    this.outdoor = 1; // 0 indoors: no wind, birds or crickets
     this._nextBird = 0;
     this._nextWind = 0;
     this._crickets = [];
@@ -61,6 +62,25 @@ export class Ambience {
     this.fires.push({ x, z, ref, max, next: 0 });
   }
 
+  /**
+   * Replace all positional sources (on map change).
+   * list: [{ kind: 'water' | 'fire', x, z, ...options }]
+   */
+  setSources(list = []) {
+    for (const l of this.loops) {
+      if (!l.node) continue;
+      try { l.node.src.stop(); } catch { /* already stopped */ }
+      l.node.gain.disconnect();
+    }
+    this.loops = [];
+    this.fires = [];
+    for (const s of list) {
+      if (s.kind === 'water') this.addWater(s.x, s.z, s);
+      else if (s.kind === 'fire') this.addFire(s.x, s.z, s);
+    }
+    if (this.started) for (const l of this.loops) l.node = this._loop(l.kind, l.filters, this.ae.bus.ambience);
+  }
+
   start() {
     if (this.started || !this.ae.ready) return;
     this.started = true;
@@ -104,7 +124,7 @@ export class Ambience {
     // wind drifts every few seconds
     if (t > this._nextWind) {
       this._nextWind = t + 2 + Math.random() * 3;
-      const level = this.windBase * (0.6 + Math.random() * 0.8);
+      const level = this.windBase * this.outdoor * (0.6 + Math.random() * 0.8);
       this.wind.gain.gain.setTargetAtTime(level, t, 1.5);
       this.wind.filters[0].frequency.setTargetAtTime(280 + Math.random() * 600, t, 2);
     }
@@ -133,7 +153,7 @@ export class Ambience {
     // birds during the day
     if (t > this._nextBird) {
       this._nextBird = t + 1.2 + Math.random() * 4;
-      if (this.day > 0.3) {
+      if (this.day > 0.3 && this.outdoor > 0.5) {
         const n = 2 + Math.floor(Math.random() * 4);
         const base = 2400 + Math.random() * 1800;
         const pan = Math.random() * 1.6 - 0.8;
@@ -150,7 +170,7 @@ export class Ambience {
     // crickets at night: three quick pulses per chirp
     for (const c of this._crickets) {
       if (t + 0.3 < c.next) continue;
-      const level = 0.012 * Math.max(0, (night - 0.3) / 0.7);
+      const level = 0.012 * this.outdoor * Math.max(0, (night - 0.3) / 0.7);
       if (level > 0.0005) {
         for (let k = 0; k < 3; k++) {
           const on = c.next + k * 0.075;

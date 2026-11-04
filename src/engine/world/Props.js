@@ -26,6 +26,17 @@ export const propMaterials = {
     }
     return this._window;
   },
+  /** Windows seen from inside: bright with daylight, dark at night. */
+  get windowDay() {
+    if (!this._windowDay) {
+      const m = new THREE.MeshLambertMaterial({ map: Textures.window(), emissiveMap: Textures.windowGlow(), emissive: new THREE.Color('#cfe6ff') });
+      m.emissiveIntensity = 1;
+      m.name = 'windowDay';
+      patchMaterial(m, { clouds: false });
+      this._windowDay = m;
+    }
+    return this._windowDay;
+  },
   get lantern() {
     if (!this._lantern) {
       this._lantern = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffa94d') });
@@ -381,4 +392,84 @@ export function buildShrine(batch, x, y, z) {
   addBox(batch, null, 'roofBlue', 3.9, 0.16, 1.0, x, y + 3.9, z - 0.4, I);
   addBox(batch, null, 'stone', 0.9, 0.7, 0.7, x, y + 0.95, z - 0.4, I);
   return { altar: V(x, y + 1.3, z - 0.4), torches: [V(x - 1.3, y + 3.05, z + 0.05), V(x + 1.3, y + 3.05, z + 0.05)] };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Interior furniture                                                  */
+/* ------------------------------------------------------------------ */
+
+const mat4 = (x, y, z, ry = 0) => baseMatrix(x, y, z, ry);
+
+export function buildTable(batch, x, y, z, { w = 1.6, d = 1.0, h = 0.8, ry = 0 } = {}) {
+  const b = mat4(x, y, z, ry);
+  addBox(batch, null, 'planks', w, 0.1, d, 0, h - 0.05, 0, b);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) addBox(batch, null, 'beam', 0.1, h - 0.1, 0.1, sx * (w / 2 - 0.12), (h - 0.1) / 2, sz * (d / 2 - 0.12), b);
+}
+
+export function buildStool(batch, x, y, z) {
+  const b = mat4(x, y, z);
+  addBox(batch, null, 'planks', 0.42, 0.08, 0.42, 0, 0.46, 0, b);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) addBox(batch, null, 'beam', 0.07, 0.42, 0.07, sx * 0.15, 0.21, sz * 0.15, b);
+}
+
+export function buildCounter(batch, x, y, z, { w = 3.5, d = 0.7, h = 1.05, ry = 0 } = {}) {
+  const b = mat4(x, y, z, ry);
+  addBox(batch, null, 'planksDark', w, h - 0.08, d, 0, (h - 0.08) / 2, 0, b);
+  addBox(batch, null, 'deck', w + 0.15, 0.1, d + 0.15, 0, h - 0.04, 0, b);
+}
+
+export function buildShelf(batch, x, y, z, { w = 1.6, h = 2.0, d = 0.4, ry = 0 } = {}) {
+  const b = mat4(x, y, z, ry);
+  for (const sx of [-1, 1]) addBox(batch, null, 'planksDark', 0.08, h, d, sx * (w / 2 - 0.04), h / 2, 0, b);
+  for (let k = 0; k < 4; k++) addBox(batch, null, 'planks', w, 0.07, d, 0, 0.1 + k * (h - 0.2) / 3, 0, b);
+  // jars and boxes on the shelves
+  for (let k = 0; k < 3; k++) {
+    for (let i = 0; i < 3; i++) {
+      const px = -w / 2 + 0.3 + i * (w - 0.6) / 2 + (k % 2) * 0.1;
+      const s = 0.18 + ((i + k) % 3) * 0.04;
+      addBox(batch, null, (i + k) % 2 ? 'barrel' : 'crate', s, s * 1.2, s, px, 0.14 + k * (h - 0.2) / 3 + s * 0.6, 0, b);
+    }
+  }
+}
+
+export function buildBed(batch, x, y, z, { ry = 0 } = {}) {
+  const b = mat4(x, y, z, ry);
+  addBox(batch, null, 'planksDark', 1.1, 0.35, 2.0, 0, 0.18, 0, b);
+  addBox(batch, null, 'linen', 1.0, 0.18, 1.9, 0, 0.44, 0, b);
+  addBox(batch, null, 'blanket', 1.04, 0.2, 1.2, 0, 0.47, 0.35, b);
+  addBox(batch, null, 'linen', 0.7, 0.14, 0.38, 0, 0.6, -0.68, b);
+  addBox(batch, null, 'planksDark', 1.1, 0.9, 0.1, 0, 0.45, -1.0, b);
+}
+
+/** Stone hearth against a wall; returns the fire position. */
+export function buildFireplace(batch, x, y, z, { ry = 0 } = {}) {
+  const b = mat4(x, y, z, ry);
+  addBox(batch, null, 'brick', 0.45, 1.5, 0.8, -0.85, 0.75, 0, b);
+  addBox(batch, null, 'brick', 0.45, 1.5, 0.8, 0.85, 0.75, 0, b);
+  addBox(batch, null, 'brick', 2.15, 0.5, 0.8, 0, 1.5 + 0.25, 0, b);
+  addBox(batch, null, 'slab', 2.4, 0.14, 0.95, 0, 2.05, 0.02, b);
+  addBox(batch, null, 'brick', 1.4, 1.6, 0.6, 0, 2.9, -0.1, b);
+  addBox(batch, null, 'iron', 1.25, 1.5, 0.05, 0, 0.75, -0.36, b);
+  addBox(batch, null, 'slab', 2.2, 0.1, 1.2, 0, 0.05, 0.25, b);
+  for (let k = 0; k < 2; k++) {
+    const log = new THREE.CylinderGeometry(0.08, 0.09, 0.8, 6);
+    log.rotateZ(Math.PI / 2);
+    log.rotateY(k ? 0.4 : -0.3);
+    batch.add(log, M('planksDark'), b.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.18 + k * 0.1, 0)));
+  }
+  return V(0, 0.12, 0.05).applyMatrix4(b);
+}
+
+/** Flat rug on the floor. */
+export function buildRug(batch, x, y, z, { w = 3, d = 2, tex = 'rug', ry = 0 } = {}) {
+  const g = new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2);
+  batch.add(g, M(tex), mat4(x, y + 0.015, z, ry));
+}
+
+/** A window set into a wall face (normal +z after `ry`). `interior` windows glow with daylight. */
+export function buildWallWindow(batch, x, y, z, { ry = 0, interior = true } = {}) {
+  const b = mat4(x, y, z, ry);
+  addBox(batch, interior ? propMaterials.windowDay : propMaterials.window, 'window', 1.0, 1.0, 0.06, 0, 0, 0.03, b, 0, true);
+  addBox(batch, null, 'beam', 1.2, 0.12, 0.16, 0, 0.56, 0.06, b);
+  addBox(batch, null, 'beam', 1.2, 0.1, 0.2, 0, -0.56, 0.08, b);
 }
