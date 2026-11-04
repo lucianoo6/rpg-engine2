@@ -24,7 +24,7 @@ export class TrunkInstances extends THREE.InstancedMesh {
     // radius profile from the ground up: spreading roots, then a slight taper
     const prof = [
       [r * flare, 0], [r * (1 + (flare - 1) * 0.45), 1.5 / PPU], [r * 1.08, 3.5 / PPU],
-      [r, 6 / PPU], [r * 0.86, H],
+      [r, 6 / PPU], [r * 0.86, H], [0, H + 0.5 / PPU], // closed top
     ];
     const lathe = (grow) => new THREE.LatheGeometry(prof.map(([x, y]) => new THREE.Vector2(x + grow, y)), segments);
     const geometry = lathe(0);

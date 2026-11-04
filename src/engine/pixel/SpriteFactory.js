@@ -235,6 +235,102 @@ export function paintTree({ seed = 1, w = 80, h = 96, leaf = '#4f8c3b', bark = '
   return pc;
 }
 
+/**
+ * One leaf cluster for 3D canopies (see world/Canopy.js): a bunch of small
+ * leafy lobes around a fuller core, so the edge is ragged instead of round.
+ * Paint 3-4 seeds per species; instances are scattered in 3D around the
+ * trunk top to build the crown.
+ */
+export function paintLeafCluster({ seed = 1, size = 38, leaf = '#4f8c3b', lobes = 8, fruit = null, normals = false, outline = 0.14 } = {}) {
+  const rng = new RNG(seed);
+  const w = size, h = Math.round(size * 0.86);
+  const pc = new PixelCanvas(w, h);
+  if (normals) pc.normal = new PixelCanvas(w, h);
+  const cx = w / 2, cy = h * 0.52;
+  const blobs = [{ x: cx, y: cy, r: w * 0.24, z: 2, p: rng.range(0, 6) }];
+  for (let i = 0; i < lobes; i++) {
+    const a = (i / lobes) * Math.PI * 2 + rng.range(-0.3, 0.3);
+    const r = w * rng.range(0.13, 0.19);
+    const d = Math.min(w * rng.range(0.17, 0.28), w / 2 - r - 1.5);
+    const y = cy + Math.sin(a) * d * 0.82;
+    blobs.push({ x: cx + Math.cos(a) * d, y: Math.min(y, h - r - 1.5), r, z: rng.range(-2, 2) - Math.sin(a) * 2, p: rng.range(0, 6) });
+  }
+  paintCanopy(pc, blobs, { leaf, seed, cy, clump: 3 });
+  if (fruit) {
+    const fr = ramp(fruit, 3, 0.1);
+    for (let i = 0; i < 3; i++) {
+      const b = rng.pick(blobs);
+      const x = Math.round(b.x + rng.range(-0.5, 0.5) * b.r), y = Math.round(b.y + rng.range(-0.2, 0.6) * b.r);
+      if (pc.alpha(x, y) && pc.alpha(x + 1, y + 1)) {
+        pc.set(x, y, fr[2]); pc.set(x + 1, y, fr[1]); pc.set(x, y + 1, fr[1]); pc.set(x + 1, y + 1, fr[0]);
+      }
+    }
+  }
+  // a soft rim: clusters overlap each other, a hard outline would draw scales
+  pc.outline({ darken: outline });
+  finishNormals(pc);
+  return pc;
+}
+
+/**
+ * One conifer skirt clump: a fan of needles hanging from a point, jagged at
+ * the bottom. Stacked rings of these build a pine in 3D (world/Canopy.js).
+ */
+export function paintNeedleClump({ seed = 1, w = 30, h = 22, leaf = '#2f6a4c', normals = false } = {}) {
+  const rng = new RNG(seed);
+  const pc = new PixelCanvas(w, h);
+  if (normals) pc.normal = new PixelCanvas(w, h);
+  const lr = ramp(leaf, 6, 0.07);
+  const cx = w / 2, apex = 1, base = h - 2;
+  const p = rng.range(0, 6);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const rel = (y + 0.5 - apex) / (base - apex);
+      if (rel < 0) continue;
+      const half = (w / 2 - 1) * Math.pow(Math.min(rel, 1), 0.7);
+      const jag = (Math.abs(((x + Math.round(p * 3)) % 5) - 2) / 2) * 0.16 + valueNoise(x / 2, 0, seed) * 0.08;
+      if (Math.abs(x + 0.5 - cx) > half || rel > 1.05 - jag) continue;
+      const nx = (x + 0.5 - cx) / Math.max(1, half);
+      const nz = Math.sqrt(Math.max(0, 1 - nx * nx));
+      const needle = (valueNoise(x / 1.5, y / 3.5, seed + 9) - 0.5) * 0.5;
+      setN(pc, x, y, nx + needle * 0.4, -0.5 + rel * 0.3, nz);
+      let lit = (nx * LIGHT[0] - 0.5 * LIGHT[1] + nz * LIGHT[2]) * 0.5 + 0.5;
+      if (pc.normal) lit = 0.62 + (lit - 0.62) * 0.35;
+      lit -= rel * 0.26;
+      lit += (valueNoise(x / 1.5, y / 3.5, seed) - 0.5) * 0.22;
+      pc.set(x, y, lr[quant(lit * 1.08, 6, x, y)]);
+    }
+  }
+  pc.outline({ darken: 0.16 });
+  finishNormals(pc);
+  return pc;
+}
+
+/** A loose twig with a few leaf tufts, poking out of a 3D canopy's edge. */
+export function paintTwig({ seed = 1, w = 24, h = 18, leaf = '#4f8c3b', bark = '#6b4a30', normals = false } = {}) {
+  const rng = new RNG(seed);
+  const pc = new PixelCanvas(w, h);
+  if (normals) pc.normal = new PixelCanvas(w, h);
+  const br = ramp(bark, 5, 0.075);
+  const x0 = 3, y0 = h - 4, x1 = w - 7, y1 = 6;
+  pc.line(x0, y0, x1, y1, br[2]);
+  pc.line(x0, y0 + 1, x1, y1 + 1, br[3]);
+  const blobs = [];
+  for (let i = 0; i < 4; i++) {
+    const t = 0.45 + i * 0.19 + rng.range(-0.05, 0.05);
+    const r = rng.range(2.6, 3.8) * (0.7 + t * 0.4);
+    blobs.push({
+      x: Math.min(w - r - 1, x0 + (x1 - x0) * t + rng.range(-2, 2)),
+      y: Math.max(r + 1, y0 + (y1 - y0) * t + rng.range(-3, 1)),
+      r, z: rng.range(-1, 1), p: rng.range(0, 6),
+    });
+  }
+  paintCanopy(pc, blobs, { leaf, seed, cy: h * 0.4, clump: 2, highlight: false });
+  pc.outline({ darken: 0.28 });
+  finishNormals(pc);
+  return pc;
+}
+
 export function paintPine({ seed = 1, w = 56, h = 104, leaf = '#2f6a4c', bark = '#5e4030', tiers = 5, normals = false, trunk3d = false } = {}) {
   const rng = new RNG(seed);
   const pc = new PixelCanvas(w, h);

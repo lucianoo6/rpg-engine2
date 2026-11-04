@@ -5,6 +5,7 @@ import { StaticBatch } from '../engine/world/StaticBatch.js';
 import * as Props from '../engine/world/Props.js';
 import { SpriteInstances } from '../engine/sprites/SpriteInstances.js';
 import { TrunkInstances } from '../engine/world/Trunks.js';
+import { ClusterCanopy } from '../engine/world/Canopy.js';
 import { Billboard } from '../engine/sprites/Billboard.js';
 import { toTexture, toNormalTexture } from '../engine/pixel/PixelCanvas.js';
 import * as SF from '../engine/pixel/SpriteFactory.js';
@@ -338,15 +339,46 @@ function buildFoliage(scene, map, world, rng, { noDecor, spots, out }) {
     if (trunk3d) set.trunks = new TrunkInstances(pc.trunk, { bark: opts.bark || (paint === SF.paintPine ? '#5e4030' : '#6b4a30'), seed: opts.seed, capacity: o.capacity });
     return set;
   };
+  // crowns: 'sprite' = one painted card, 'clusters' = 3D leaf clusters, 'twigs' = clusters + loose twigs
+  const canopyMode = (typeof location !== 'undefined' && new URLSearchParams(location.search).get('canopy')) || 'twigs';
+  const clusterTree = ({ seed, leaf = '#4f8c3b', bark = '#6b4a30', fruit = null }, { capacity }) => {
+    const canopy = new ClusterCanopy({
+      clusters: [0, 1, 2, 3].map((k) => SF.paintLeafCluster({ seed: seed * 10 + k, leaf, fruit: k % 2 ? fruit : null, normals: true })),
+      twigs: canopyMode === 'twigs' ? [0, 1].map((k) => SF.paintTwig({ seed: seed * 10 + k, leaf, bark, normals: true })) : [],
+      crown: { height: 3.75, rx: 1.75, ry: 1.4 },
+      capacity,
+    });
+    return {
+      canopy,
+      trunks: new TrunkInstances({ height: 3.75 * 16 * 0.97, radius: 4 }, { bark, seed, capacity }),
+      add: (x, y, z, o) => canopy.add(x, y, z, o),
+    };
+  };
+  const tree = (opts, o) => (canopyMode === 'sprite' ? treeKind(SF.paintTree, opts, o) : clusterTree(opts, o));
   const trees = [
-    treeKind(SF.paintTree, { seed: 3 }, { capacity: 160, wind: 0.08 }),
-    treeKind(SF.paintTree, { seed: 17, leaf: '#5a9440' }, { capacity: 160, wind: 0.08 }),
-    treeKind(SF.paintTree, { seed: 11, leaf: '#5d9a45', fruit: '#d83a3a' }, { capacity: 40, wind: 0.08 }),
-    treeKind(SF.paintTree, { seed: 7, leaf: '#c9773a', bark: '#5d4030' }, { capacity: 40, wind: 0.08 }),
+    tree({ seed: 3 }, { capacity: 160, wind: 0.08 }),
+    tree({ seed: 17, leaf: '#5a9440' }, { capacity: 160, wind: 0.08 }),
+    tree({ seed: 11, leaf: '#5d9a45', fruit: '#d83a3a' }, { capacity: 40, wind: 0.08 }),
+    tree({ seed: 7, leaf: '#c9773a', bark: '#5d4030' }, { capacity: 40, wind: 0.08 }),
   ];
+  const clusterPine = ({ seed, leaf = '#2f6a4c', bark = '#5e4030', tiers = 5 }, { capacity }) => {
+    const canopy = new ClusterCanopy({
+      clusters: [0, 1, 2].map((k) => SF.paintNeedleClump({ seed: seed * 10 + k, leaf, normals: true })),
+      crown: { tiers, bottom: 2.5, top: 6.1, rx: 1.6, clumpWidth: 30 / 16 },
+      pivot: [0.5, 0.92],
+      capacity,
+      wind: 0.03,
+    });
+    return {
+      canopy,
+      trunks: new TrunkInstances({ height: 4.3 * 16, radius: 3.4 }, { bark, seed, capacity }),
+      add: (x, y, z, o) => canopy.add(x, y, z, o),
+    };
+  };
+  const pine = (opts, o) => (canopyMode === 'sprite' ? treeKind(SF.paintPine, opts, o) : clusterPine(opts, o));
   const pines = [
-    treeKind(SF.paintPine, { seed: 5 }, { capacity: 200, wind: 0.05 }),
-    treeKind(SF.paintPine, { seed: 9, leaf: '#3a7350', tiers: 6 }, { capacity: 200, wind: 0.05 }),
+    pine({ seed: 5 }, { capacity: 200, wind: 0.05 }),
+    pine({ seed: 9, leaf: '#3a7350', tiers: 6 }, { capacity: 200, wind: 0.05 }),
   ];
   const bushes = [
     vol(SF.paintBush({ seed: 2, normals: true }), { capacity: 120, wind: 0.04 }),
@@ -370,7 +402,7 @@ function buildFoliage(scene, map, world, rng, { noDecor, spots, out }) {
     new SpriteInstances(tex(SF.paintRock({ seed: 1 })), { capacity: 60, tilt: 0.8 }),
     new SpriteInstances(tex(SF.paintRock({ seed: 4, w: 16, h: 12 })), { capacity: 80, tilt: 0.8 }),
   ];
-  const all = [...trees, ...pines, ...bushes, ...tufts, ...flowers, reeds, wheat, ...rocks];
+  const all = [...trees.flatMap((t) => (t.canopy ? t.canopy.sets : [t])), ...pines.flatMap((t) => (t.canopy ? t.canopy.sets : [t])), ...bushes, ...tufts, ...flowers, reeds, wheat, ...rocks];
 
   const typeName = (i, j) => (map.inBounds(i, j) ? map.typeAt(i, j).name : 'none');
   const nearPath = (x, z, m) => POI.paths.some((p) => distToPolyline(x, z, p.pts) < p.w + m);
