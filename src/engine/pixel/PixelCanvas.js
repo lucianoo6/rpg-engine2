@@ -201,6 +201,26 @@ export function toNormalTexture(pc) {
   return tex;
 }
 
+/**
+ * Pack sprites side by side into one strip of equal cells (the largest
+ * width and height), each centred in its cell, for SpriteInstances with
+ * `frames`. Normal maps (`.normal`) are packed alongside. Returns the strip
+ * canvas with `.normal` and `.frames`.
+ */
+export function packStrip(pcs) {
+  const cw = Math.max(...pcs.map((p) => p.w)), ch = Math.max(...pcs.map((p) => p.h));
+  const out = new PixelCanvas(cw * pcs.length, ch);
+  const withNormals = pcs.some((p) => p.normal);
+  if (withNormals) out.normal = new PixelCanvas(cw * pcs.length, ch);
+  pcs.forEach((p, i) => {
+    const dx = i * cw + Math.floor((cw - p.w) / 2), dy = Math.floor((ch - p.h) / 2);
+    out.blit(p, dx, dy);
+    if (withNormals && p.normal) out.normal.blit(p.normal, dx, dy);
+  });
+  out.frames = pcs.length;
+  return out;
+}
+
 export function toTexture(pc, { repeat = false, mipmaps = false, clampV = false } = {}) {
   const tex = new THREE.CanvasTexture(pc.toCanvas());
   tex.colorSpace = THREE.SRGBColorSpace;

@@ -1,5 +1,5 @@
 import { SpriteInstances } from '../sprites/SpriteInstances.js';
-import { toTexture, toNormalTexture } from '../pixel/PixelCanvas.js';
+import { toTexture, toNormalTexture, packStrip } from '../pixel/PixelCanvas.js';
 
 /**
  * Tree crowns built from many leaf-cluster billboards placed in 3D around
@@ -8,9 +8,10 @@ import { toTexture, toNormalTexture } from '../pixel/PixelCanvas.js';
  * cluster is itself painted as a bunch of smaller lobes (paintLeafCluster),
  * and optional twigs (paintTwig) break the silhouette at the edge.
  *
- * All clusters of one species share a few SpriteInstances (one draw call
- * per variant). Placement is derived from the tree position, so it is
- * stable and does not disturb the caller's random sequence.
+ * Every cluster and twig variant of a species is packed into one atlas
+ * strip, so the whole species is a single SpriteInstances (one draw call,
+ * plus one per shadow pass). Placement is derived from the tree position,
+ * so it is stable and does not disturb the caller's random sequence.
  */
 export class ClusterCanopy {
   /**
@@ -28,12 +29,15 @@ export class ClusterCanopy {
     this.crown = crown;
     this.perTree = count;
     this.twigCount = twigs.length ? twigCount : 0;
-    const make = (pc, n, pivot) => new SpriteInstances(toTexture(pc), {
-      capacity: n, pivot, wind, normalMap: pc.normal ? toNormalTexture(pc.normal) : null, sunFacingShadow: true,
+    this.clusterFrames = clusters.map((_, i) => i);
+    this.twigFrames = twigs.map((_, i) => clusters.length + i);
+    const strip = packStrip([...clusters, ...twigs]);
+    const perTree = count + 1 + this.twigCount;
+    this.mesh = new SpriteInstances(toTexture(strip), {
+      capacity: capacity * perTree, pivot, wind, frames: strip.frames,
+      normalMap: strip.normal ? toNormalTexture(strip.normal) : null, sunFacingShadow: true,
     });
-    this.clusterSets = clusters.map((pc) => make(pc, Math.ceil((capacity * (count + 1)) / clusters.length) + 8, pivot));
-    this.twigSets = twigs.map((pc) => make(pc, Math.ceil((capacity * twigCount) / twigs.length) + 8, [0.5, 0.5]));
-    this.sets = [...this.clusterSets, ...this.twigSets];
+    this.sets = [this.mesh];
   }
 
   /** Grow a crown over a trunk standing at (x, y, z). */
@@ -65,7 +69,8 @@ export class ClusterCanopy {
     const { rnd, range } = this._rand(x, z);
     const shade = this._shade(tint);
     const { tiers, bottom, top, rx, clumpWidth } = this.crown;
-    const pick = (sets) => sets[Math.floor(rnd() * sets.length)];
+    const pick = (frames) => frames[Math.floor(rnd() * frames.length)];
+    const put = (ex, ey, ez, o) => this.mesh.add(ex, ey, ez, { ...o, frame: pick(this.clusterFrames) });
     const a0 = rnd() * Math.PI * 2;
     for (let k = 0; k < tiers; k++) {
       const f = k / (tiers - 1); // 0 = lowest skirt
@@ -77,11 +82,11 @@ export class ClusterCanopy {
         const az = a0 + (i / n) * Math.PI * 2 + k * 0.9 + range(-0.25, 0.25);
         const d = n === 1 ? 0 : R * range(0.3, 0.4);
         const s = ((R * 1.75) / clumpWidth) * range(0.92, 1.06);
-        pick(this.clusterSets).add(x + Math.cos(az) * d, hb + range(-0.06, 0.06), z + Math.sin(az) * d, { scale: s, flip: rnd() < 0.5, tint: shade(light * range(0.95, 1.03)) });
+        put(x + Math.cos(az) * d, hb + range(-0.06, 0.06), z + Math.sin(az) * d, { scale: s, flip: rnd() < 0.5, tint: shade(light * range(0.95, 1.03)) });
       }
     }
     // the tip
-    pick(this.clusterSets).add(x, y + top * scale, z, { scale: ((rx * 0.42) / clumpWidth) * scale * 1.6, flip: rnd() < 0.5, tint: shade(1.06) });
+    put(x, y + top * scale, z, { scale: ((rx * 0.42) / clumpWidth) * scale * 1.6, flip: rnd() < 0.5, tint: shade(1.06) });
   }
 
   _addRound(x, y, z, { scale = 1, tint = null } = {}) {
@@ -90,12 +95,12 @@ export class ClusterCanopy {
     const cy = y + height * scale;
     const a0 = rnd() * Math.PI * 2;
     const shade = this._shade(tint);
-    const put = (sets, ex, ey, ez, s, k) => {
-      const set = sets[Math.floor(rnd() * sets.length)];
-      set.add(ex, ey, ez, { scale: s, flip: rnd() < 0.5, tint: shade(k) });
+    const put = (frames, ex, ey, ez, s, k) => {
+      const frame = frames[Math.floor(rnd() * frames.length)];
+      this.mesh.add(ex, ey, ez, { scale: s, flip: rnd() < 0.5, tint: shade(k), frame });
     };
     // a dark core fills the gaps, so the crown never looks hollow
-    put(this.clusterSets, x, cy - 0.15 * scale, z, scale * 1.05, 0.72);
+    put(this.clusterFrames, x, cy - 0.15 * scale, z, scale * 1.05, 0.72);
     // rings from the top down; lower clusters sit in the crown's own shade
     const rings = [[1.25, 1], [0.6, 3], [0.05, 4], [-0.55, 3]];
     let placed = 0;
@@ -107,7 +112,7 @@ export class ClusterCanopy {
         const ex = x + Math.cos(e) * Math.cos(az) * rx * d * scale;
         const ez = z + Math.cos(e) * Math.sin(az) * rx * d * scale;
         const ey = cy + Math.sin(e) * ry * d * scale;
-        put(this.clusterSets, ex, ey, ez, scale * range(0.85, 1.12), 0.86 + 0.22 * (0.5 + 0.5 * Math.sin(e)));
+        put(this.clusterFrames, ex, ey, ez, scale * range(0.85, 1.12), 0.86 + 0.22 * (0.5 + 0.5 * Math.sin(e)));
       }
     }
     for (let k = 0; k < this.twigCount; k++) {
@@ -115,7 +120,7 @@ export class ClusterCanopy {
       const e = range(-0.35, 0.45);
       const d = range(0.98, 1.1);
       put(
-        this.twigSets,
+        this.twigFrames,
         x + Math.cos(e) * Math.cos(az) * rx * d * scale,
         cy + Math.sin(e) * ry * d * scale,
         z + Math.cos(e) * Math.sin(az) * rx * d * scale,
@@ -126,7 +131,7 @@ export class ClusterCanopy {
   }
 
   finalize() {
-    for (const s of this.sets) s.finalize();
+    this.mesh.finalize();
     return this;
   }
 }

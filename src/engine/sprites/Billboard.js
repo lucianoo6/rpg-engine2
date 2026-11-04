@@ -29,7 +29,7 @@ function shadowMaterialsFor(opts) {
   return shadowCache.get(key);
 }
 
-export function makeSpriteMaterial(map, { lit = true, alphaTest = 0.5, color = 0xffffff, wind = 0, windHeight = 1, flip = false, intensity = 1, transparent = false, blending = THREE.NormalBlending, depthWrite = true, cutout = false, normalMap = null } = {}) {
+export function makeSpriteMaterial(map, { lit = true, alphaTest = 0.5, color = 0xffffff, wind = 0, windHeight = 1, flip = false, intensity = 1, transparent = false, blending = THREE.NormalBlending, depthWrite = true, cutout = false, normalMap = null, frames = 0 } = {}) {
   let material;
   if (lit) {
     material = new THREE.MeshLambertMaterial({ map, alphaTest, color });
@@ -39,7 +39,7 @@ export function makeSpriteMaterial(map, { lit = true, alphaTest = 0.5, color = 0
     material.color.multiplyScalar(intensity);
   }
   material.shadowSide = THREE.DoubleSide;
-  patchMaterial(material, { billboard: true, wind, windHeight, clouds: lit, flip, cutout });
+  patchMaterial(material, { billboard: true, wind, windHeight, clouds: lit, flip, cutout, frames });
   return material;
 }
 

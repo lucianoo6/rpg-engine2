@@ -30,6 +30,9 @@ uniform float uWindStrength;
 #ifdef HD_FLIP
 attribute float aFlip;
 #endif
+#ifdef HD_FRAMES
+attribute float aFrame;
+#endif
 #ifdef HD_WORLDPOS
 varying vec3 vHdWorld;
 #endif
@@ -130,13 +133,16 @@ function inject(src, target, replacement, label) {
  *  - clouds:    drifting cloud shadows modulating direct light.
  *  - cutout:    dithered see-through hole where geometry hides the player.
  *  - flip:      per-instance horizontal UV flip via an `aFlip` attribute.
+ *  - frames:    the map is a horizontal strip of this many equal cells; an
+ *               `aFrame` attribute picks each instance's cell (atlases let
+ *               several sprite variants share one draw call).
  */
-export function patchMaterial(material, { billboard = false, wind = 0, windHeight = 1, clouds = false, cutout = false, flip = false } = {}) {
+export function patchMaterial(material, { billboard = false, wind = 0, windHeight = 1, clouds = false, cutout = false, flip = false, frames = 0 } = {}) {
   const isDepth = material.isMeshDepthMaterial || material.isMeshDistanceMaterial;
   const useClouds = clouds && !isDepth;
   const useCutout = cutout && !isDepth;
   const needWorld = useClouds || useCutout;
-  const key = `hd2d|${billboard}|${wind}|${windHeight}|${useClouds}|${useCutout}|${flip}`;
+  const key = `hd2d|${billboard}|${wind}|${windHeight}|${useClouds}|${useCutout}|${flip}|${frames}`;
   material.onBeforeCompile = (shader) => {
     for (const k of ['uTime', 'uCamYaw', 'uSunYaw', 'uWindStrength']) shader.uniforms[k] = globalUniforms[k];
     let defs = '';
@@ -145,6 +151,7 @@ export function patchMaterial(material, { billboard = false, wind = 0, windHeigh
     if (useCutout) defs += '#define HD_CUTOUT\n';
     if (needWorld) defs += '#define HD_WORLDPOS\n';
     if (flip) defs += '#define HD_FLIP\n';
+    if (frames > 1) defs += `#define HD_FRAMES ${frames.toFixed(1)}\n`;
     if (billboard === 'sun') defs += '#define HD_SUN_FACING\n';
     const kind = material.type;
     let vs = inject(shader.vertexShader, '#include <common>', `#include <common>\n${defs}${VERT_PARS}`, `${kind} vertex`);
@@ -155,8 +162,10 @@ export function patchMaterial(material, { billboard = false, wind = 0, windHeigh
     if (wind > 0) begin += WIND;
     if (billboard) begin += 'transformed = hdBillboard(transformed);\n';
     vs = inject(vs, '#include <begin_vertex>', begin, `${kind} vertex`);
-    if (flip) {
-      vs = inject(vs, '#include <uv_vertex>', '#include <uv_vertex>\n#ifdef USE_MAP\nif (aFlip > 0.5) vMapUv.x = 1.0 - vMapUv.x;\n#endif\n#ifdef USE_NORMALMAP\nif (aFlip > 0.5) vNormalMapUv.x = 1.0 - vNormalMapUv.x;\n#endif', `${kind} vertex`);
+    if (flip || frames > 1) {
+      // flip inside the cell first, then move to the instance's cell
+      const uvFix = (v) => `${flip ? `if (aFlip > 0.5) ${v}.x = 1.0 - ${v}.x;\n` : ''}${frames > 1 ? `${v}.x = (aFrame + ${v}.x) / HD_FRAMES;\n` : ''}`;
+      vs = inject(vs, '#include <uv_vertex>', `#include <uv_vertex>\n#ifdef USE_MAP\n${uvFix('vMapUv')}#endif\n#ifdef USE_NORMALMAP\n${uvFix('vNormalMapUv')}#endif`, `${kind} vertex`);
     }
     if (needWorld) {
       vs = inject(
