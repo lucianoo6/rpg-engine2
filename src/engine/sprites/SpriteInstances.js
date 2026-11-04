@@ -9,19 +9,19 @@ import { PPU } from '../pixel/TextureFactory.js';
  * and horizontal flip add variety without extra textures.
  */
 export class SpriteInstances extends THREE.InstancedMesh {
-  constructor(texture, { capacity = 256, pivot = [0.5, 0], lit = true, alphaTest = 0.5, wind = 0, castShadow = true, receiveShadow = true, tilt = 0.55, scale = 1 } = {}) {
+  constructor(texture, { capacity = 256, pivot = [0.5, 0], lit = true, alphaTest = 0.5, wind = 0, castShadow = true, receiveShadow = true, tilt = 0.55, scale = 1, normalMap = null, sunFacingShadow = false } = {}) {
     const w = (texture.userData.pixelWidth / PPU) * scale;
     const h = (texture.userData.pixelHeight / PPU) * scale;
     const geometry = spriteGeometry(w, h, pivot[0], pivot[1], tilt).clone();
     const flip = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
     geometry.setAttribute('aFlip', flip);
-    const material = makeSpriteMaterial(texture, { lit, alphaTest, wind, windHeight: h, flip: true, cutout: true });
+    const material = makeSpriteMaterial(texture, { lit, alphaTest, wind, windHeight: h, flip: true, cutout: true, normalMap });
     super(geometry, material, capacity);
-    const sh = makeShadowMaterials({ billboard: true, wind, windHeight: h, flip: true });
+    const sh = makeShadowMaterials({ billboard: true, wind, windHeight: h, flip: true, sunFacing: sunFacingShadow });
     this.customDepthMaterial = sh.depth;
     this.customDistanceMaterial = sh.distance;
     this.castShadow = castShadow;
-    this.receiveShadow = receiveShadow;
+    this.receiveShadow = sunFacingShadow ? false : receiveShadow;
     this.count = 0;
     this.spriteWidth = w;
     this.spriteHeight = h;

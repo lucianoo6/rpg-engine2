@@ -158,6 +158,7 @@ export class DayNightCycle {
     }
     if (this.scene.background && this.scene.background.isColor) this.scene.background.copy(env.fog);
     globalUniforms.uCloudStrength.value = env.clouds;
+    globalUniforms.uSunYaw.value = Math.atan2(s.sunDir.x, s.sunDir.z);
     if (this.post) {
       this.post.grade.exposure = env.exposure * this.post.grade.exposureBias;
       this.post.grade.saturation = env.sat * this.post.grade.saturationBias;

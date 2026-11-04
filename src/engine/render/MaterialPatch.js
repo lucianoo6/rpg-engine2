@@ -7,6 +7,7 @@ import * as THREE from 'three';
 export const globalUniforms = {
   uTime: { value: 0 },
   uCamYaw: { value: 0 },
+  uSunYaw: { value: 0 }, // horizontal direction of the sun (set by DayNightCycle)
   uWindStrength: { value: 1 },
   uCloudStrength: { value: 0.3 },
   uCloudScale: { value: 0.05 },
@@ -24,6 +25,7 @@ export const globalUniforms = {
 const VERT_PARS = /* glsl */ `
 uniform float uTime;
 uniform float uCamYaw;
+uniform float uSunYaw;
 uniform float uWindStrength;
 #ifdef HD_FLIP
 attribute float aFlip;
@@ -38,8 +40,13 @@ vec2 hdOrigin() {
     return modelMatrix[3].xz;
   #endif
 }
+#ifdef HD_SUN_FACING
+  #define HD_YAW uSunYaw
+#else
+  #define HD_YAW uCamYaw
+#endif
 vec3 hdBillboard(vec3 p) {
-  float c = cos(uCamYaw), s = sin(uCamYaw);
+  float c = cos(HD_YAW), s = sin(HD_YAW);
   return vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z);
 }
 `;
@@ -117,7 +124,8 @@ function inject(src, target, replacement, label) {
 /**
  * Inject engine features into a built-in three.js material:
  *  - billboard: rotate the quad around Y to face the camera (yaw only),
- *               so sprites stay upright like HD-2D characters.
+ *               so sprites stay upright like HD-2D characters. 'sun' faces
+ *               the sun instead (shadow passes: full silhouettes, never edge-on).
  *  - wind:      sway amplitude in world units (0 disables), stronger at the top.
  *  - clouds:    drifting cloud shadows modulating direct light.
  *  - cutout:    dithered see-through hole where geometry hides the player.
@@ -130,13 +138,14 @@ export function patchMaterial(material, { billboard = false, wind = 0, windHeigh
   const needWorld = useClouds || useCutout;
   const key = `hd2d|${billboard}|${wind}|${windHeight}|${useClouds}|${useCutout}|${flip}`;
   material.onBeforeCompile = (shader) => {
-    for (const k of ['uTime', 'uCamYaw', 'uWindStrength']) shader.uniforms[k] = globalUniforms[k];
+    for (const k of ['uTime', 'uCamYaw', 'uSunYaw', 'uWindStrength']) shader.uniforms[k] = globalUniforms[k];
     let defs = '';
     if (wind > 0) defs += `#define HD_WIND ${wind.toFixed(4)}\n#define HD_WIND_HEIGHT ${windHeight.toFixed(4)}\n`;
     if (useClouds) defs += '#define HD_CLOUDS\n';
     if (useCutout) defs += '#define HD_CUTOUT\n';
     if (needWorld) defs += '#define HD_WORLDPOS\n';
     if (flip) defs += '#define HD_FLIP\n';
+    if (billboard === 'sun') defs += '#define HD_SUN_FACING\n';
     const kind = material.type;
     let vs = inject(shader.vertexShader, '#include <common>', `#include <common>\n${defs}${VERT_PARS}`, `${kind} vertex`);
     if (billboard && vs.includes('#include <beginnormal_vertex>')) {
@@ -147,7 +156,7 @@ export function patchMaterial(material, { billboard = false, wind = 0, windHeigh
     if (billboard) begin += 'transformed = hdBillboard(transformed);\n';
     vs = inject(vs, '#include <begin_vertex>', begin, `${kind} vertex`);
     if (flip) {
-      vs = inject(vs, '#include <uv_vertex>', '#include <uv_vertex>\n#ifdef USE_MAP\nif (aFlip > 0.5) vMapUv.x = 1.0 - vMapUv.x;\n#endif', `${kind} vertex`);
+      vs = inject(vs, '#include <uv_vertex>', '#include <uv_vertex>\n#ifdef USE_MAP\nif (aFlip > 0.5) vMapUv.x = 1.0 - vMapUv.x;\n#endif\n#ifdef USE_NORMALMAP\nif (aFlip > 0.5) vNormalMapUv.x = 1.0 - vNormalMapUv.x;\n#endif', `${kind} vertex`);
     }
     if (needWorld) {
       vs = inject(
@@ -183,11 +192,18 @@ export function patchMaterial(material, { billboard = false, wind = 0, windHeigh
   return material;
 }
 
-/** Shadow-pass materials that mirror the billboard/wind deformation. */
-export function makeShadowMaterials(opts) {
+/**
+ * Shadow-pass materials that mirror the billboard/wind deformation.
+ * With `sunFacing`, the sprite casts its sun shadow as if it faced the sun,
+ * so the shadow stays a full silhouette (a camera-facing card casts a
+ * sliver when the sun is to the side). Such sprites should not receive
+ * shadows themselves, or their own silhouette darkens half the card.
+ * Point-light shadows always keep the camera-facing pose.
+ */
+export function makeShadowMaterials({ sunFacing = false, ...opts }) {
   const depth = new THREE.MeshDepthMaterial();
   const distance = new THREE.MeshDistanceMaterial();
-  patchMaterial(depth, { ...opts, clouds: false, cutout: false });
+  patchMaterial(depth, { ...opts, billboard: opts.billboard && sunFacing ? 'sun' : opts.billboard, clouds: false, cutout: false });
   patchMaterial(distance, { ...opts, clouds: false, cutout: false });
   return { depth, distance };
 }

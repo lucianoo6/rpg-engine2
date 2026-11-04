@@ -194,6 +194,13 @@ export class PixelCanvas {
  * nearest neighbour when magnified (crisp texels), optional mipmaps for
  * distant tiling surfaces so they do not shimmer.
  */
+/** Upload a normal-map PixelCanvas (linear data, nearest sampling). */
+export function toNormalTexture(pc) {
+  const tex = toTexture(pc);
+  tex.colorSpace = THREE.NoColorSpace;
+  return tex;
+}
+
 export function toTexture(pc, { repeat = false, mipmaps = false, clampV = false } = {}) {
   const tex = new THREE.CanvasTexture(pc.toCanvas());
   tex.colorSpace = THREE.SRGBColorSpace;

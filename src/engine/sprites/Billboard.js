@@ -29,10 +29,11 @@ function shadowMaterialsFor(opts) {
   return shadowCache.get(key);
 }
 
-export function makeSpriteMaterial(map, { lit = true, alphaTest = 0.5, color = 0xffffff, wind = 0, windHeight = 1, flip = false, intensity = 1, transparent = false, blending = THREE.NormalBlending, depthWrite = true, cutout = false } = {}) {
+export function makeSpriteMaterial(map, { lit = true, alphaTest = 0.5, color = 0xffffff, wind = 0, windHeight = 1, flip = false, intensity = 1, transparent = false, blending = THREE.NormalBlending, depthWrite = true, cutout = false, normalMap = null } = {}) {
   let material;
   if (lit) {
     material = new THREE.MeshLambertMaterial({ map, alphaTest, color });
+    if (normalMap) material.normalMap = normalMap;
   } else {
     material = new THREE.MeshBasicMaterial({ map, alphaTest, color, transparent, blending, depthWrite });
     material.color.multiplyScalar(intensity);

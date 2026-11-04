@@ -18,6 +18,38 @@ const LIGHT = (() => {
 const quant = (s, steps, x, y, dither = 0.7) =>
   clamp(Math.floor((s + (bayer(x, y) - 0.5) * (dither / steps)) * steps), 0, steps - 1);
 
+/**
+ * Normal maps for sprites: painters that receive a canvas with a `normal`
+ * PixelCanvas also write the fake surface normal of every pixel into it,
+ * encoded tangent-space style (R = right, G = up, B = towards the viewer).
+ * Lit by real scene lights, foliage then gets volume instead of looking
+ * like a painted card.
+ */
+function setN(pc, x, y, nx, ny, nz) {
+  if (!pc.normal) return;
+  const l = Math.hypot(nx, ny, nz) || 1;
+  pc.normal.set(x, y, [Math.round((nx / l * 0.5 + 0.5) * 255), Math.round((-ny / l * 0.5 + 0.5) * 255), Math.round((nz / l * 0.5 + 0.5) * 255)]);
+}
+
+/** Give outline / highlight pixels added after shading a normal from their neighbours. */
+function finishNormals(pc) {
+  if (!pc.normal) return;
+  const n = pc.normal;
+  const fill = [];
+  for (let y = 0; y < pc.h; y++) {
+    for (let x = 0; x < pc.w; x++) {
+      if (!pc.alpha(x, y) || n.alpha(x, y)) continue;
+      let r = 0, g = 0, b = 0, c = 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const q = n.get(x + dx, y + dy);
+        if (q && q[3]) { r += q[0]; g += q[1]; b += q[2]; c++; }
+      }
+      fill.push([x, y, c ? [r / c, g / c, b / c] : [128, 128, 255]]);
+    }
+  }
+  for (const [x, y, v] of fill) n.set(x, y, v.map(Math.round));
+}
+
 function paintTrunk(pc, { cx, top, bottom, base = 2.5, flare = 2.6, bark, seed }) {
   const br = ramp(bark, 5, 0.075);
   const h = bottom - top;
@@ -30,10 +62,18 @@ function paintTrunk(pc, { cx, top, bottom, base = 2.5, flare = 2.6, bark, seed }
     for (let x = Math.floor(c - half); x <= Math.ceil(c + half); x++) {
       const nx = (x + 0.5 - c) / half;
       if (Math.abs(nx) > 1) continue;
-      let k = nx < -0.45 ? 3 : nx > 0.35 ? 1 : 2;
-      if (nx > 0.75) k = 0;
+      let k;
+      if (pc.normal) {
+        // lighting comes from the normal map: keep only a hint of baked shading
+        k = nx > 0.7 ? 1 : nx < -0.6 ? 3 : 2;
+      } else {
+        k = nx < -0.45 ? 3 : nx > 0.35 ? 1 : 2;
+        if (nx > 0.75) k = 0;
+      }
       if ((x * 7 + Math.floor(y / 3)) % 5 === 0 && k > 0) k -= 1; // bark grain
       pc.set(x, y, br[k]);
+      // round trunk; the flaring roots tilt their normals up and outwards
+      setN(pc, x, y, nx, t > 0.82 ? -0.5 * (t - 0.82) * 5 : 0, Math.sqrt(Math.max(0.05, 1 - nx * nx)));
     }
   }
 }
@@ -77,8 +117,9 @@ function paintCanopy(pc, blobs, { leaf, seed, cy, clump = 5, highlight = true })
       let nz = s.nz + cnz * 0.35;
       const nl = Math.hypot(nx, ny, nz);
       nx /= nl; ny /= nl; nz /= nl;
-      let lit = nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2];
-      lit = lit * 0.5 + 0.5;
+      setN(pc, x, y, nx, ny, nz);
+      let lit = (nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]) * 0.5 + 0.5;
+      if (pc.normal) lit = 0.62 + (lit - 0.62) * 0.35; // real lights do most of the shading
       lit -= Math.max(0, (y - cy) / pc.h) * 0.55; // underside ambient occlusion
       lit -= (v.d2 - v.d1 < 1.2 ? 0.12 : 0); // crevices between clumps
       lit += (valueNoise(x / 2.5, y / 2.5, seed) - 0.5) * 0.12;
@@ -97,9 +138,10 @@ function paintCanopy(pc, blobs, { leaf, seed, cy, clump = 5, highlight = true })
   }
 }
 
-export function paintTree({ seed = 1, w = 80, h = 96, leaf = '#4f8c3b', bark = '#6b4a30', fruit = null, density = 1 } = {}) {
+export function paintTree({ seed = 1, w = 80, h = 96, leaf = '#4f8c3b', bark = '#6b4a30', fruit = null, density = 1, normals = false } = {}) {
   const rng = new RNG(seed);
   const pc = new PixelCanvas(w, h);
+  if (normals) pc.normal = new PixelCanvas(w, h);
   const cx = w / 2;
   paintTrunk(pc, { cx, top: h * 0.42, bottom: h - 1, base: 3, bark, seed });
   // branches reaching into the canopy
@@ -142,12 +184,14 @@ export function paintTree({ seed = 1, w = 80, h = 96, leaf = '#4f8c3b', bark = '
     }
   }
   pc.outline({ darken: 0.28 });
+  finishNormals(pc);
   return pc;
 }
 
-export function paintPine({ seed = 1, w = 56, h = 104, leaf = '#2f6a4c', bark = '#5e4030', tiers = 5 } = {}) {
+export function paintPine({ seed = 1, w = 56, h = 104, leaf = '#2f6a4c', bark = '#5e4030', tiers = 5, normals = false } = {}) {
   const rng = new RNG(seed);
   const pc = new PixelCanvas(w, h);
+  if (normals) pc.normal = new PixelCanvas(w, h);
   const cx = w / 2;
   paintTrunk(pc, { cx, top: h * 0.7, bottom: h - 1, base: 2.5, bark, seed, flare: 2 });
   const lr = ramp(leaf, 6, 0.07);
@@ -181,7 +225,10 @@ export function paintPine({ seed = 1, w = 56, h = 104, leaf = '#2f6a4c', bark = 
       const half = Math.max(1, t.half * Math.pow(Math.min(rel, 1), 0.85));
       const nx = (x + 0.5 - cx) / half;
       const nz = Math.sqrt(Math.max(0, 1 - nx * nx));
+      const needle = (valueNoise(x / 1.5, y / 3.5, seed + 9) - 0.5) * 0.5;
+      setN(pc, x, y, nx + needle * 0.4, -0.45 + rel * 0.25, nz);
       let lit = (nx * LIGHT[0] + -0.45 * LIGHT[1] + nz * LIGHT[2]) * 0.5 + 0.5;
+      if (pc.normal) lit = 0.62 + (lit - 0.62) * 0.35;
       lit -= rel * 0.28; // lower part of each skirt is shaded
       if (hit > 0) {
         const prev = tierList[hit - 1];
@@ -192,12 +239,14 @@ export function paintPine({ seed = 1, w = 56, h = 104, leaf = '#2f6a4c', bark = 
     }
   }
   pc.outline({ darken: 0.26 });
+  finishNormals(pc);
   return pc;
 }
 
-export function paintBush({ seed = 1, w = 32, h = 24, leaf = '#4a8a3a', flowers = null } = {}) {
+export function paintBush({ seed = 1, w = 32, h = 24, leaf = '#4a8a3a', flowers = null, normals = false } = {}) {
   const rng = new RNG(seed);
   const pc = new PixelCanvas(w, h);
+  if (normals) pc.normal = new PixelCanvas(w, h);
   const blobs = [];
   for (let i = 0; i < 5; i++) {
     blobs.push({
@@ -218,6 +267,7 @@ export function paintBush({ seed = 1, w = 32, h = 24, leaf = '#4a8a3a', flowers 
     }
   }
   pc.outline({ darken: 0.28 });
+  finishNormals(pc);
   return pc;
 }
 

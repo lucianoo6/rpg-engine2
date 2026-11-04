@@ -5,7 +5,7 @@ import { StaticBatch } from '../engine/world/StaticBatch.js';
 import * as Props from '../engine/world/Props.js';
 import { SpriteInstances } from '../engine/sprites/SpriteInstances.js';
 import { Billboard } from '../engine/sprites/Billboard.js';
-import { toTexture } from '../engine/pixel/PixelCanvas.js';
+import { toTexture, toNormalTexture } from '../engine/pixel/PixelCanvas.js';
 import * as SF from '../engine/pixel/SpriteFactory.js';
 import { Textures } from '../engine/pixel/TextureFactory.js';
 import { FlickerLight } from '../engine/lighting/FlickerLight.js';
@@ -327,20 +327,22 @@ function addFenceColliders(world, pts) {
 
 function buildFoliage(scene, map, world, rng, { noDecor, spots, out }) {
   const tex = (pc) => toTexture(pc);
+  // volumetric foliage: albedo + pixel normal map, so real lights shape it
+  const vol = (pc, o) => new SpriteInstances(toTexture(pc), { ...o, normalMap: toNormalTexture(pc.normal), sunFacingShadow: true });
   const trees = [
-    new SpriteInstances(tex(SF.paintTree({ seed: 3 })), { capacity: 160, wind: 0.08 }),
-    new SpriteInstances(tex(SF.paintTree({ seed: 17, leaf: '#5a9440' })), { capacity: 160, wind: 0.08 }),
-    new SpriteInstances(tex(SF.paintTree({ seed: 11, leaf: '#5d9a45', fruit: '#d83a3a' })), { capacity: 40, wind: 0.08 }),
-    new SpriteInstances(tex(SF.paintTree({ seed: 7, leaf: '#c9773a', bark: '#5d4030' })), { capacity: 40, wind: 0.08 }),
+    vol(SF.paintTree({ seed: 3, normals: true }), { capacity: 160, wind: 0.08 }),
+    vol(SF.paintTree({ seed: 17, leaf: '#5a9440', normals: true }), { capacity: 160, wind: 0.08 }),
+    vol(SF.paintTree({ seed: 11, leaf: '#5d9a45', fruit: '#d83a3a', normals: true }), { capacity: 40, wind: 0.08 }),
+    vol(SF.paintTree({ seed: 7, leaf: '#c9773a', bark: '#5d4030', normals: true }), { capacity: 40, wind: 0.08 }),
   ];
   const pines = [
-    new SpriteInstances(tex(SF.paintPine({ seed: 5 })), { capacity: 200, wind: 0.05 }),
-    new SpriteInstances(tex(SF.paintPine({ seed: 9, leaf: '#3a7350', tiers: 6 })), { capacity: 200, wind: 0.05 }),
+    vol(SF.paintPine({ seed: 5, normals: true }), { capacity: 200, wind: 0.05 }),
+    vol(SF.paintPine({ seed: 9, leaf: '#3a7350', tiers: 6, normals: true }), { capacity: 200, wind: 0.05 }),
   ];
   const bushes = [
-    new SpriteInstances(tex(SF.paintBush({ seed: 2 })), { capacity: 120, wind: 0.04 }),
-    new SpriteInstances(tex(SF.paintBush({ seed: 4, flowers: '#f2a3c4' })), { capacity: 60, wind: 0.04 }),
-    new SpriteInstances(tex(SF.paintBush({ seed: 6, leaf: '#3f7d45', flowers: '#f5f0dc' })), { capacity: 60, wind: 0.04 }),
+    vol(SF.paintBush({ seed: 2, normals: true }), { capacity: 120, wind: 0.04 }),
+    vol(SF.paintBush({ seed: 4, flowers: '#f2a3c4', normals: true }), { capacity: 60, wind: 0.04 }),
+    vol(SF.paintBush({ seed: 6, leaf: '#3f7d45', flowers: '#f5f0dc', normals: true }), { capacity: 60, wind: 0.04 }),
   ];
   const tufts = [
     new SpriteInstances(tex(SF.paintTuft({ seed: 1 })), { capacity: 2600, wind: 0.07, castShadow: false }),
@@ -380,7 +382,7 @@ function buildFoliage(scene, map, world, rng, { noDecor, spots, out }) {
       const set = r < 0.42 ? trees[0] : r < 0.84 ? trees[1] : r < 0.92 ? trees[2] : trees[3];
       set.add(x, y, z, { scale: s, flip, tint });
     }
-    trunks.push({ x, z });
+    trunks.push({ x, z, s, pine: kind === 'pine' });
     world.addCircle(x, z, 0.38, 'tree');
   };
 
@@ -496,6 +498,23 @@ function buildFoliage(scene, map, world, rng, { noDecor, spots, out }) {
     if (big) world.addCircle(x, z, 0.4);
   }
   for (const [x, z] of [[29.2, 10.6], [33.8, 10.8], [29.6, 11.6]]) rocks[0].add(x, world.groundAt(x, z), z, { scale: 1.2 });
+
+  // soft contact shadow where each trunk meets the ground
+  const blobTex = new THREE.CanvasTexture(SF.softCircleCanvas(64, 0.1, 1, '0,0,0'));
+  const blobs = new THREE.InstancedMesh(
+    new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, opacity: 0.42, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+    trunks.length,
+  );
+  const bm = new THREE.Matrix4();
+  trunks.forEach((t, i) => {
+    const sx = (t.pine ? 1.6 : 2.4) * t.s, sz = (t.pine ? 1.0 : 1.3) * t.s;
+    bm.makeScale(sx, 1, sz).setPosition(t.x, world.groundAt(t.x, t.z) + 0.02, t.z);
+    blobs.setMatrixAt(i, bm);
+  });
+  blobs.renderOrder = 2;
+  blobs.frustumCulled = false;
+  scene.add(blobs);
 
   const groundCover = [...tufts, ...flowers, reeds];
   for (const s of all) {
