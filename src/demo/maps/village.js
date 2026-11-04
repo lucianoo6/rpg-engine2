@@ -43,7 +43,7 @@ export async function buildVillage(game) {
   const map = new GameMap('village');
   map.tileMap = createVillageMap();
   map.world = new World(map.tileMap);
-  const d = decorateVillage(map.root, map.tileMap, map.world, { lightParent: null });
+  const d = decorateVillage(map.root, map.tileMap, map.world, { lightParent: null, foliage: game.foliageFor() });
   map.decor = d;
   Object.assign(map, {
     lights: d.lights, emitters: d.emitters, fireflies: d.fireflies, dayEmitters: d.dayEmitters,

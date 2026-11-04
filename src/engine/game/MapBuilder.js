@@ -1,3 +1,4 @@
+import { resolveFoliage } from '../world/Trees.js';
 import { TileMap } from '../world/TileMap.js';
 import { World } from '../world/World.js';
 import { buildTerrain } from '../world/TerrainBuilder.js';
@@ -56,12 +57,15 @@ export async function buildMap(id, data, { prefabs, game }) {
   }
 
   const batch = new StaticBatch();
-  const ctx = { map, batch, game, groundAt: (x, z) => map.world.groundAt(x, z) };
+  const finish = [];
+  const foliage = game && game.foliageFor ? game.foliageFor(P.foliage) : resolveFoliage(P.foliage);
+  const ctx = { map, batch, game, foliage, groundAt: (x, z) => map.world.groundAt(x, z), onFinish: (fn) => finish.push(fn) };
   for (const o of data.objects) {
     const fn = prefabs.get(o.type);
     if (!fn) { console.warn(`Map "${id}": no prefab for object type "${o.type}" (${o.name})`); continue; }
     await fn(o, ctx);
   }
+  for (const fn of finish) fn();
   map.root.add(batch.build({ name: id }));
   // prefabs built earlier (e.g. wandering NPCs) may already hold the nav grid;
   // rebuild it in place now that every obstacle exists

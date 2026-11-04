@@ -9,11 +9,14 @@ import { Wander, Patrol } from '../entities/Behaviours.js';
 import { toTexture } from '../pixel/PixelCanvas.js';
 import * as SF from '../pixel/SpriteFactory.js';
 import { parseScript } from './Events.js';
+import { TreeSpecies } from '../world/Trees.js';
 
 /**
  * Prefabs turn map objects ({ type, name, x, z, w, d, props }) into game
  * things. Each prefab is `(obj, ctx) => void | Promise`, where ctx is
- * { map: GameMap, batch: StaticBatch, game, groundAt(x, z) }.
+ * { map: GameMap, batch: StaticBatch, game, groundAt(x, z), foliage, onFinish(fn) }:
+ * `foliage` is the map's tree style (see world/Trees.js) and onFinish(fn)
+ * runs fn after every object has been placed.
  *
  * Register your own with registry.register('type', fn); a game-specific
  * registry can extend the defaults below.
@@ -148,7 +151,28 @@ export function defaultPrefabs() {
     ctx.map.root.add(s);
     ctx.map.shafts.push(s);
   });
+  // trees follow the map's foliage style (campaign default, map `foliage` property);
+  // one TreeSpecies per distinct look, built once every object is placed
+  const tree = (o, ctx) => {
+    const p = o.props;
+    const kind = p.kind || (p.sprite === 'pine' ? 'conifer' : 'broadleaf');
+    const opts = { kind, seed: num(p.seed, 1), leaf: p.leaf || undefined, bark: p.bark || undefined, fruit: p.fruit || null, tiers: num(p.tiers, 5) };
+    const key = JSON.stringify(opts);
+    ctx.trees ??= new Map();
+    if (!ctx.trees.has(key)) {
+      const sp = new TreeSpecies({ ...opts, style: ctx.foliage, capacity: 128 });
+      ctx.trees.set(key, sp);
+      ctx.onFinish(() => {
+        sp.finalize();
+        for (const m of sp.meshes) ctx.map.root.add(m);
+      });
+    }
+    ctx.trees.get(key).add(o.x, yOf(o, ctx), o.z, { scale: num(p.scale, 1), flip: bool(p.flip, false), tint: p.tint || null });
+    if (bool(p.solid, true)) ctx.map.world.addCircle(o.x, o.z, num(p.radius, 0.38), 'tree');
+  };
+  r.register('tree', tree);
   r.register('sprite', (o, ctx) => {
+    if (o.props.sprite === 'tree' || o.props.sprite === 'pine') return tree(o, ctx);
     const tex = spriteFor(o.props.sprite || 'bush', num(o.props.seed, 1));
     if (!tex) return console.warn(`Unknown sprite "${o.props.sprite}"`);
     const b = new Billboard(tex, { wind: num(o.props.wind, 0.03) });

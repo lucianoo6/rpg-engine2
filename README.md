@@ -90,7 +90,7 @@ scene ─► HDR target (half-float colour + depth, 4× MSAA)
 - **Pixel-art shading everywhere.** Painters light shapes with fake normals, quantise them onto hue-shifted ramps (shadows drift blue, highlights warm) with ordered dithering, then add selective outlines. Water and the waterfall snap to the same 16 texels-per-unit grid.
 - **Mood through time.** Each day/night keyframe holds sun and moon, bounce light, fog, exposure, grade, god-ray strength and cloud shadows. Lanterns, windows, fireflies and water reflections follow the night level.
 - **Volumetric foliage.** Tree, pine and bush sprites are painted with a matching normal map (round canopy clumps, a cylindrical trunk), so the sun lights them from its actual side and the shading moves with the time of day. Their sun shadows are cast as if the card faced the sun (`sunFacingShadow`), so the shadow on the ground stays a full silhouette at any camera angle, and each trunk gets a soft contact shadow at its base. Below the canopy the trunk is a real low-poly 3D mesh with pixel bark and a dark rim (`world/Trunks.js`). It stays round from every camera angle and catches the canopy's shadow. Paint the sprite with `trunk3d: true` and it erases its own lower trunk and reports the size the mesh needs in `pc.trunk`. `?trunks=sprite` brings back the painted trunks for comparison.
-- **3D crowns.** Tree crowns can be built from many leaf-cluster billboards placed in 3D around the trunk top (`world/Canopy.js`), so near clusters slide over far ones as the camera turns. Each cluster is painted as a bunch of smaller lobes (`paintLeafCluster`) with its own normal map. Lower and inner clusters sit in the crown's shade, and loose twigs (`paintTwig`) break up the silhouette. Pines stack skirts of needle clumps (`paintNeedleClump`) that narrow to a tip. Use `?canopy=sprite` for single painted crowns, `?canopy=clusters` for clusters without twigs, or `?canopy=twigs` (the default) for clusters with twigs. The crown layout comes from the tree's position, so it is the same on every load.
+- **3D crowns.** Tree crowns can be built from many leaf-cluster billboards placed in 3D around the trunk top (`world/Canopy.js`), so near clusters slide over far ones as the camera turns. Each cluster is painted as a bunch of smaller lobes (`paintLeafCluster`) with its own normal map. Lower and inner clusters sit in the crown's shade, and loose twigs (`paintTwig`) break up the silhouette. Pines stack skirts of needle clumps (`paintNeedleClump`) that narrow to a tip. Every style stays in the engine. Each campaign picks its own, as described in [Tree styles per campaign](#tree-styles-per-campaign). The crown layout comes from the tree's position, so it is the same on every load.
 - **Soft ground borders.** Where grass meets a path, cobbles, a field or sand at the same height, a strip of grass blades spills over the edge, so ground types don't change in hard tile blocks. The tile type's `fringe` and `priority` control this.
 - **Characters that act.** Generated sheets have idle, walk, a separate leaning run, and a talking mouth that moves while the character's line types out. Cutscenes add `hop` reactions and emote balloons.
 - **Readable at any angle.** When geometry or foliage sits between the camera and the player, a dithered see-through hole opens in it.
@@ -213,6 +213,26 @@ Save tile layers as CSV, and keep tilesets as JSON (`.tsj`) or embedded. Add you
 ### Events and cutscenes
 
 Dialogue and cutscenes are JSON command lists (`say`, `choose`, `walk`, `face`, `emote`, `hop`, `camera`, `fade`, `time`, `flag`, `if`, `warp`, `sound`, `banner`, `save`, `run`). `walk` uses the path finder, so actors go around furniture and up stairs. The full list is documented at the top of `src/engine/game/Events.js`. The village's opening scene and the inn's welcome are both written this way.
+
+### Tree styles per campaign
+
+Tree style is an art-direction choice, so the engine keeps every option and the campaign picks one (`engine/world/Trees.js`):
+
+| key | options | look |
+| --- | --- | --- |
+| `broadleaf` | `sprite`, `clusters`, `twigs` | one painted crown; leaf clusters in 3D; clusters plus loose twigs |
+| `conifer` | `sprite`, `layers` | one painted pine; stacked skirts of needle clumps |
+| `trunks` | `3d`, `sprite` | round 3D trunk or painted trunk under sprite crowns (cluster crowns always use 3D) |
+
+The demo campaign sets its style in `src/demo/campaign.js`:
+
+```js
+foliage: { broadleaf: 'twigs', conifer: 'sprite', trunks: '3d' },
+```
+
+Settings are applied in layers, and each layer overrides the one before: the engine default (`DEFAULT_FOLIAGE`), then the campaign, then the map, then debug URL parameters. A Tiled map sets its own with a `foliage` string property such as `{"conifer":"layers"}`. A code map passes an object to `game.foliageFor({...})`. While testing, you can override the style from the address bar with `?canopy=`, `?pines=` and `?trunks=`. Unknown keys or values are reported in the console and ignored.
+
+In code, `new TreeSpecies({ kind: 'broadleaf' | 'conifer', style, seed, leaf, bark, fruit, tiers, capacity })` builds one species in the chosen style. Call `add(x, y, z, { scale, flip, tint })` to plant a tree, then `finalize()`, then add `meshes` to the scene. In Tiled maps, a `tree` object (props `kind`, `seed`, `leaf`, `bark`, `fruit`, `scale`, `tint`) or a `sprite` object with `sprite` set to `tree` or `pine` follows the map's style. Trees that look the same share their meshes.
 
 ### Saving
 

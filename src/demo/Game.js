@@ -26,6 +26,8 @@ import { SaveSystem } from '../engine/game/SaveSystem.js';
 import { damp } from '../engine/core/Random.js';
 import { buildVillage } from './maps/village.js';
 import { CAST } from './cast.js';
+import { CAMPAIGN } from './campaign.js';
+import { resolveFoliage } from '../engine/world/Trees.js';
 
 const TIME_PRESETS = [
   ['Dawn', 6.4], ['Morning', 9], ['Noon', 13], ['Golden Hour', 16.5], ['Dusk', 18.6], ['Night', 22],
@@ -69,6 +71,7 @@ export class HollowbrookGame {
     this.lightPool = new LightPool(scene, { size: 8 });
 
     // ---- maps: code-built or data files ----
+    this.campaign = CAMPAIGN;
     this.prefabs = defaultPrefabs();
     this.mapDefs = {
       village: () => buildVillage(this),
@@ -157,6 +160,17 @@ export class HollowbrookGame {
   }
 
   /* ------------------------------ maps ------------------------------ */
+
+  /**
+   * Tree style for a map: engine default, then the campaign, then the map's
+   * own `foliage` (object or JSON string), then debug URL parameters
+   * (?canopy=, ?pines=, ?trunks=).
+   */
+  foliageFor(mapFoliage = null) {
+    const p = new URLSearchParams(location.search);
+    const debug = { broadleaf: p.get('canopy'), conifer: p.get('pines'), trunks: p.get('trunks') };
+    return resolveFoliage(this.campaign.foliage, mapFoliage, debug);
+  }
 
   async loadDataMap(id, url) {
     const data = await loadMapData(url);
