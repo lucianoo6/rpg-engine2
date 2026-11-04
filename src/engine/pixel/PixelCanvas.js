@@ -203,17 +203,20 @@ export function toNormalTexture(pc) {
 
 /**
  * Pack sprites side by side into one strip of equal cells (the largest
- * width and height), each centred in its cell, for SpriteInstances with
- * `frames`. Normal maps (`.normal`) are packed alongside. Returns the strip
- * canvas with `.normal` and `.frames`.
+ * width and height) for SpriteInstances with `frames`. Each sprite is
+ * centred horizontally; `align` 'center' or 'bottom' places it vertically
+ * (bottom keeps ground-anchored sprites on the ground). Normal maps
+ * (`.normal`) are packed alongside. Returns the strip with `.normal` and
+ * `.frames`.
  */
-export function packStrip(pcs) {
+export function packStrip(pcs, { align = 'center' } = {}) {
   const cw = Math.max(...pcs.map((p) => p.w)), ch = Math.max(...pcs.map((p) => p.h));
   const out = new PixelCanvas(cw * pcs.length, ch);
   const withNormals = pcs.some((p) => p.normal);
   if (withNormals) out.normal = new PixelCanvas(cw * pcs.length, ch);
   pcs.forEach((p, i) => {
-    const dx = i * cw + Math.floor((cw - p.w) / 2), dy = Math.floor((ch - p.h) / 2);
+    const dx = i * cw + Math.floor((cw - p.w) / 2);
+    const dy = align === 'bottom' ? ch - p.h : Math.floor((ch - p.h) / 2);
     out.blit(p, dx, dy);
     if (withNormals && p.normal) out.normal.blit(p.normal, dx, dy);
   });

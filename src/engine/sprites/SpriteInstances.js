@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { spriteGeometry, makeSpriteMaterial } from './Billboard.js';
 import { makeShadowMaterials } from '../render/MaterialPatch.js';
 import { PPU } from '../pixel/TextureFactory.js';
+import { packStrip, toTexture, toNormalTexture } from '../pixel/PixelCanvas.js';
 
 /**
  * Thousands of static billboards (trees, grass, flowers, rocks) in one draw
@@ -29,6 +30,22 @@ export class SpriteInstances extends THREE.InstancedMesh {
     this.spriteHeight = h;
     this._m = new THREE.Matrix4();
     this._c = new THREE.Color();
+  }
+
+  /**
+   * Several sprite variants in one draw call: packs the canvases into an
+   * atlas strip (normal maps too, when they have `.normal`) and returns the
+   * mesh with `variants`, one `{ add(x, y, z, o) }` per canvas, so code that
+   * picks a variant and adds to it works unchanged.
+   *   align: 'center' | 'bottom' (ground-anchored sprites of different heights)
+   */
+  static fromVariants(pcs, { align = 'center', ...opts } = {}) {
+    const strip = packStrip(pcs, { align });
+    const mesh = new SpriteInstances(toTexture(strip), {
+      ...opts, frames: strip.frames, normalMap: strip.normal ? toNormalTexture(strip.normal) : null,
+    });
+    mesh.variants = pcs.map((_, i) => ({ mesh, frame: i, add: (x, y, z, o = {}) => mesh.add(x, y, z, { ...o, frame: i }) }));
+    return mesh;
   }
 
   /** Add an instance; returns its index or -1 when full. */

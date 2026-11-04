@@ -64,10 +64,10 @@ export class TrunkInstances extends THREE.InstancedMesh {
   }
 
   /** Add a trunk at a canopy's ground point; `rot` turns the bark so neighbours differ. */
-  add(x, y, z, { scale = 1, rot = 0, tint = null } = {}) {
+  add(x, y, z, { scale = 1, heightScale = 1, rot = 0, tint = null } = {}) {
     if (this.count >= this.instanceMatrix.count) return -1;
     const i = this.count++;
-    this._m.compose(this._p.set(x, y - 0.04, z), this._q.setFromAxisAngle(this._up, rot), this._s.set(scale, scale, scale));
+    this._m.compose(this._p.set(x, y - 0.04, z), this._q.setFromAxisAngle(this._up, rot), this._s.set(scale, scale * heightScale, scale));
     this.setMatrixAt(i, this._m);
     this.setColorAt(i, tint ? this._c.set(tint) : this._c.setRGB(1, 1, 1));
     return i;

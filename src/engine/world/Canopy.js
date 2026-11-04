@@ -1,5 +1,4 @@
 import { SpriteInstances } from '../sprites/SpriteInstances.js';
-import { toTexture, toNormalTexture, packStrip } from '../pixel/PixelCanvas.js';
 
 /**
  * Tree crowns built from many leaf-cluster billboards placed in 3D around
@@ -24,19 +23,26 @@ export class ClusterCanopy {
    *   count:    clusters per tree; twigCount: twigs per tree
    *   capacity: trees this canopy can hold
    *   wind:     sway amplitude per cluster
+   *   atlas:    { mesh, clusterFrames, twigFrames } to draw into a mesh shared
+   *             with other species (see TreeGroup) instead of an own one
    */
-  constructor({ clusters, twigs = [], crown, count = 10, twigCount = 4, capacity = 64, wind = 0.04, pivot = [0.5, 0.5] }) {
+  constructor({ clusters = [], twigs = [], crown, count = 10, twigCount = 4, capacity = 64, wind = 0.04, pivot = [0.5, 0.5], atlas = null }) {
     this.crown = crown;
     this.perTree = count;
     this.twigCount = twigs.length ? twigCount : 0;
+    if (atlas) {
+      // share a mesh with other species: atlas = { mesh, clusterFrames, twigFrames }
+      this.mesh = atlas.mesh;
+      this.clusterFrames = atlas.clusterFrames;
+      this.twigFrames = atlas.twigFrames || [];
+      this.twigCount = this.twigFrames.length ? twigCount : 0;
+      this.sets = [];
+      return;
+    }
     this.clusterFrames = clusters.map((_, i) => i);
     this.twigFrames = twigs.map((_, i) => clusters.length + i);
-    const strip = packStrip([...clusters, ...twigs]);
     const perTree = count + 1 + this.twigCount;
-    this.mesh = new SpriteInstances(toTexture(strip), {
-      capacity: capacity * perTree, pivot, wind, frames: strip.frames,
-      normalMap: strip.normal ? toNormalTexture(strip.normal) : null, sunFacingShadow: true,
-    });
+    this.mesh = SpriteInstances.fromVariants([...clusters, ...twigs], { capacity: capacity * perTree, pivot, wind, sunFacingShadow: true });
     this.sets = [this.mesh];
   }
 
@@ -131,7 +137,7 @@ export class ClusterCanopy {
   }
 
   finalize() {
-    this.mesh.finalize();
+    for (const m of this.sets) m.finalize();
     return this;
   }
 }

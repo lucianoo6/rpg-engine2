@@ -4,9 +4,9 @@ import { Water, Waterfall } from '../engine/world/Water.js';
 import { StaticBatch } from '../engine/world/StaticBatch.js';
 import * as Props from '../engine/world/Props.js';
 import { SpriteInstances } from '../engine/sprites/SpriteInstances.js';
-import { TreeSpecies, DEFAULT_FOLIAGE } from '../engine/world/Trees.js';
+import { TreeGroup, DEFAULT_FOLIAGE } from '../engine/world/Trees.js';
 import { Billboard } from '../engine/sprites/Billboard.js';
-import { toTexture, toNormalTexture } from '../engine/pixel/PixelCanvas.js';
+import { toTexture } from '../engine/pixel/PixelCanvas.js';
 import * as SF from '../engine/pixel/SpriteFactory.js';
 import { Textures } from '../engine/pixel/TextureFactory.js';
 import { FlickerLight } from '../engine/lighting/FlickerLight.js';
@@ -328,43 +328,48 @@ function addFenceColliders(world, pts) {
 
 function buildFoliage(scene, map, world, rng, { noDecor, spots, out, foliage }) {
   const tex = (pc) => toTexture(pc);
+  // variants of one kind share an atlas mesh (one draw call); `.variants`
+  // keep the per-variant add() the placement code below picks from
+  const atlas = (pcs, o) => SpriteInstances.fromVariants(pcs, o);
+  // tree crowns in the campaign's style (see engine/world/Trees.js); every
+  // species of a kind shares its crown and trunk meshes
+  const treeGroup = new TreeGroup({
+    kind: 'broadleaf', style: foliage,
+    species: [
+      { seed: 3, capacity: 160 },
+      { seed: 17, leaf: '#5a9440', capacity: 160 },
+      { seed: 11, leaf: '#5d9a45', fruit: '#d83a3a', capacity: 40 },
+      { seed: 7, leaf: '#c9773a', bark: '#5d4030', capacity: 40 },
+    ],
+  });
+  const pineGroup = new TreeGroup({
+    kind: 'conifer', style: foliage,
+    species: [{ seed: 5, capacity: 200 }, { seed: 9, leaf: '#3a7350', tiers: 6, capacity: 200 }],
+  });
+  const trees = treeGroup.species;
+  const pines = pineGroup.species;
   // volumetric foliage: albedo + pixel normal map, so real lights shape it
-  const vol = (pc, o) => new SpriteInstances(toTexture(pc), { ...o, normalMap: toNormalTexture(pc.normal), sunFacingShadow: true });
-  // tree crowns in the campaign's style (see engine/world/Trees.js)
-  const species = (kind, opts, capacity) => new TreeSpecies({ kind, style: foliage, capacity, ...opts });
-  const trees = [
-    species('broadleaf', { seed: 3 }, 160),
-    species('broadleaf', { seed: 17, leaf: '#5a9440' }, 160),
-    species('broadleaf', { seed: 11, leaf: '#5d9a45', fruit: '#d83a3a' }, 40),
-    species('broadleaf', { seed: 7, leaf: '#c9773a', bark: '#5d4030' }, 40),
-  ];
-  const pines = [
-    species('conifer', { seed: 5 }, 200),
-    species('conifer', { seed: 9, leaf: '#3a7350', tiers: 6 }, 200),
-  ];
-  const bushes = [
-    vol(SF.paintBush({ seed: 2, normals: true }), { capacity: 120, wind: 0.04 }),
-    vol(SF.paintBush({ seed: 4, flowers: '#f2a3c4', normals: true }), { capacity: 60, wind: 0.04 }),
-    vol(SF.paintBush({ seed: 6, leaf: '#3f7d45', flowers: '#f5f0dc', normals: true }), { capacity: 60, wind: 0.04 }),
-  ];
-  const tufts = [
-    new SpriteInstances(tex(SF.paintTuft({ seed: 1 })), { capacity: 2600, wind: 0.07, castShadow: false }),
-    new SpriteInstances(tex(SF.paintTuft({ seed: 2, base: '#79ad45', blades: 6 })), { capacity: 2000, wind: 0.07, castShadow: false }),
-    new SpriteInstances(tex(SF.paintTuft({ seed: 3, base: '#477f3a', blades: 9, h: 14 })), { capacity: 1600, wind: 0.07, castShadow: false }),
-  ];
-  const flowers = [
-    new SpriteInstances(tex(SF.paintFlowers({ seed: 2 })), { capacity: 500, wind: 0.06, castShadow: false }),
-    new SpriteInstances(tex(SF.paintFlowers({ seed: 3, color: '#e98fb0' })), { capacity: 500, wind: 0.06, castShadow: false }),
-    new SpriteInstances(tex(SF.paintFlowers({ seed: 4, color: '#f6f3ea' })), { capacity: 400, wind: 0.06, castShadow: false }),
-    new SpriteInstances(tex(SF.paintFlowers({ seed: 5, color: '#8fb3f0' })), { capacity: 300, wind: 0.06, castShadow: false }),
-  ];
+  const bushMesh = atlas([
+    SF.paintBush({ seed: 2, normals: true }),
+    SF.paintBush({ seed: 4, flowers: '#f2a3c4', normals: true }),
+    SF.paintBush({ seed: 6, leaf: '#3f7d45', flowers: '#f5f0dc', normals: true }),
+  ], { capacity: 240, wind: 0.04, sunFacingShadow: true, align: 'bottom' });
+  const tuftMesh = atlas([
+    SF.paintTuft({ seed: 1 }),
+    SF.paintTuft({ seed: 2, base: '#79ad45', blades: 6 }),
+    SF.paintTuft({ seed: 3, base: '#477f3a', blades: 9, h: 14 }),
+  ], { capacity: 6200, wind: 0.07, castShadow: false, align: 'bottom' });
+  const flowerMesh = atlas([
+    SF.paintFlowers({ seed: 2 }),
+    SF.paintFlowers({ seed: 3, color: '#e98fb0' }),
+    SF.paintFlowers({ seed: 4, color: '#f6f3ea' }),
+    SF.paintFlowers({ seed: 5, color: '#8fb3f0' }),
+  ], { capacity: 1700, wind: 0.06, castShadow: false, align: 'bottom' });
   const reeds = new SpriteInstances(tex(SF.paintReeds({ seed: 1 })), { capacity: 300, wind: 0.09, castShadow: false });
   const wheat = new SpriteInstances(tex(SF.paintTuft({ seed: 8, base: '#c9b04f', blades: 11, h: 18 })), { capacity: 400, wind: 0.08, castShadow: true });
-  const rocks = [
-    new SpriteInstances(tex(SF.paintRock({ seed: 1 })), { capacity: 60, tilt: 0.8 }),
-    new SpriteInstances(tex(SF.paintRock({ seed: 4, w: 16, h: 12 })), { capacity: 80, tilt: 0.8 }),
-  ];
-  const all = [...bushes, ...tufts, ...flowers, reeds, wheat, ...rocks];
+  const rockMesh = atlas([SF.paintRock({ seed: 1 }), SF.paintRock({ seed: 4, w: 16, h: 12 })], { capacity: 140, tilt: 0.8, align: 'bottom' });
+  const bushes = bushMesh.variants, tufts = tuftMesh.variants, flowers = flowerMesh.variants, rocks = rockMesh.variants;
+  const all = [bushMesh, tuftMesh, flowerMesh, reeds, wheat, rockMesh];
 
   const typeName = (i, j) => (map.inBounds(i, j) ? map.typeAt(i, j).name : 'none');
   const nearPath = (x, z, m) => POI.paths.some((p) => distToPolyline(x, z, p.pts) < p.w + m);
@@ -520,12 +525,12 @@ function buildFoliage(scene, map, world, rng, { noDecor, spots, out, foliage }) 
   blobs.frustumCulled = false;
   scene.add(blobs);
 
-  for (const sp of [...trees, ...pines]) {
-    sp.finalize();
-    for (const m of sp.meshes) scene.add(m);
+  for (const g of [treeGroup, pineGroup]) {
+    g.finalize();
+    for (const m of g.meshes) scene.add(m);
   }
 
-  const groundCover = [...tufts, ...flowers, reeds];
+  const groundCover = [tuftMesh, flowerMesh, reeds];
   for (const s of all) {
     s.finalize({ shuffle: groundCover.includes(s) });
     s.frustumCulled = false;
