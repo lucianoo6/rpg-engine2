@@ -267,6 +267,10 @@ Browser tests start their own Vite server and drive headless Chromium through [P
 
 They use software WebGL, so they need no GPU. Expect a few minutes on CI. On a new machine, install the browser once with `npx playwright install chromium`.
 
+## Battles
+
+The engine ships no battle system on purpose. [`docs/batalhas/contrato.md`](docs/batalhas/contrato.md) (in Portuguese) is the contract campaigns implement their own rules against. It covers responsibilities, life cycle, interfaces, the effect pipeline, data formats, guarantees and contract tests. Status: draft, not implemented yet.
+
 ## Credits
 
 - Built on [three.js](https://threejs.org) (`0.186.1`) and [lil-gui](https://lil-gui.georgealways.com), with [Vite](https://vite.dev) for development.
