@@ -420,7 +420,7 @@
      "rotation": 0,
      "visible": true,
      "x": 104.0,
-     "y": 28.0,
+     "y": 29.6,
      "width": 0,
      "height": 0,
      "point": true,
@@ -1199,7 +1199,7 @@
   {
    "name": "scripts",
    "type": "string",
-   "value": "{\"room\": [{\"do\": \"choose\", \"who\": \"Marta\", \"text\": \"A room for the night? Ten coppers, breakfast included.\", \"options\": [\"Yes, please\", \"Maybe later\"], \"then\": [[{\"do\": \"flag\", \"set\": \"rentedRoom\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"The bed by the window is yours. I'll wake you with the bread.\"}, {\"do\": \"fade\", \"to\": 1, \"s\": 0.8}, {\"do\": \"time\", \"hour\": 7.5, \"s\": 2.5}, {\"do\": \"fade\", \"to\": 0, \"s\": 0.8}, {\"do\": \"banner\", \"title\": \"Morning\", \"subtitle\": \"The smell of fresh bread drifts up from the kitchen\"}, {\"do\": \"save\"}], [{\"do\": \"say\", \"who\": \"Marta\", \"text\": \"The fire's warm whenever you change your mind.\"}]]}], \"welcome\": [{\"do\": \"emote\", \"who\": \"Marta\", \"icon\": \"!\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"Oh! A customer!\"}, {\"do\": \"walk\", \"who\": \"Marta\", \"to\": \"player\"}, {\"do\": \"face\", \"who\": \"player\", \"to\": \"Marta\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"Welcome to the Sleeping Fox. Mind the step, and mind Rook over there. He cheats at cards.\"}, {\"do\": \"emote\", \"who\": \"Rook\", \"icon\": \"♪\", \"wait\": false}, {\"do\": \"run\", \"script\": \"room\"}, {\"do\": \"walk\", \"who\": \"Marta\", \"to\": [6.5, 1.75]}, {\"do\": \"face\", \"who\": \"Marta\", \"to\": [6.5, 6]}]}"
+   "value": "{\"room\": [{\"do\": \"choose\", \"who\": \"Marta\", \"text\": \"A room for the night? Ten coppers, breakfast included.\", \"options\": [\"Yes, please\", \"Maybe later\"], \"then\": [[{\"do\": \"flag\", \"set\": \"rentedRoom\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"The bed by the window is yours. I'll wake you with the bread.\"}, {\"do\": \"fade\", \"to\": 1, \"s\": 0.8}, {\"do\": \"time\", \"hour\": 7.5, \"s\": 2.5}, {\"do\": \"fade\", \"to\": 0, \"s\": 0.8}, {\"do\": \"banner\", \"title\": \"Morning\", \"subtitle\": \"The smell of fresh bread drifts up from the kitchen\"}, {\"do\": \"save\"}], [{\"do\": \"say\", \"who\": \"Marta\", \"text\": \"The fire's warm whenever you change your mind.\"}]]}], \"welcome\": [{\"do\": \"emote\", \"who\": \"Marta\", \"icon\": \"!\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"Oh! A customer!\"}, {\"do\": \"walk\", \"who\": \"Marta\", \"to\": \"player\"}, {\"do\": \"face\", \"who\": \"player\", \"to\": \"Marta\"}, {\"do\": \"say\", \"who\": \"Marta\", \"text\": \"Welcome to the Sleeping Fox. Mind the step, and mind Rook over there. He cheats at cards.\"}, {\"do\": \"emote\", \"who\": \"Rook\", \"icon\": \"♪\", \"wait\": false}, {\"do\": \"run\", \"script\": \"room\"}, {\"do\": \"walk\", \"who\": \"Marta\", \"to\": [6.5, 1.85]}, {\"do\": \"face\", \"who\": \"Marta\", \"to\": [6.5, 6]}]}"
   }
  ],
  "tilesets": [

@@ -8,7 +8,7 @@
  * so characters walk straight lines instead of grid zig-zags.
  */
 export class NavGrid {
-  constructor(world, { res = 2, radius = 0.3 } = {}) {
+  constructor(world, { res = 2, radius = 0.36 } = {}) {
     this.world = world;
     this.res = res;
     this.radius = radius;
